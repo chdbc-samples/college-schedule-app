@@ -12,5 +12,4 @@ It must be placed inside the below triple backticks section:
 -->
 ```markdown changelog
 
-
 ```
