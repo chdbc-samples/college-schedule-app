@@ -94,3 +94,85 @@ export DB_PASSWORD=your_password
 chcp 65001
 mvn exec:java -D"exec.mainClass=com.college.MainApp"
 ```
+
+## Публікація артефактів
+
+Проект налаштовано на автоматичну публікацію артефактів у GitHub Packages при кожному push в гілку main. 
+
+### Використання пакетів
+
+Для використання опублікованих пакетів у вашому проекті, додайте наступну конфігурацію до вашого `pom.xml`:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.college</groupId>
+        <artifactId>college-schedule</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/OWNER/college-schedule-app</url>
+    </repository>
+</repositories>
+```
+
+Замініть `OWNER` на ім'я власника репозиторію.
+
+### Налаштування автентифікації
+
+Для доступу до пакетів вам потрібно налаштувати автентифікацію GitHub:
+
+#### Windows
+1. Створіть файл `settings.xml` в директорії `%USERPROFILE%\.m2\` (зазвичай `C:\Users\YourUsername\.m2\`)
+2. Додайте наступну конфігурацію:
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>YOUR_GITHUB_USERNAME</username>
+      <password>YOUR_GITHUB_TOKEN</password>
+    </server>
+  </servers>
+</settings>
+```
+
+Якщо директорія `.m2` не існує:
+```cmd
+mkdir "%USERPROFILE%\.m2"
+```
+
+#### Linux/macOS
+Додайте конфігурацію в файл `~/.m2/settings.xml`:
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>YOUR_GITHUB_USERNAME</username>
+      <password>YOUR_GITHUB_TOKEN</password>
+    </server>
+  </servers>
+</settings>
+```
+
+#### Отримання токену GitHub
+1. Перейдіть в налаштування GitHub:
+   - Settings -> Developer settings -> Personal access tokens
+   - або використайте пряме посилання: https://github.com/settings/tokens
+2. Натисніть "Generate new token"
+3. Надайте токену необхідні права:
+   - `read:packages` - для завантаження пакетів
+   - `write:packages` - для публікації пакетів
+4. Скопіюйте згенерований токен і збережіть його в безпечному місці
+5. Використайте цей токен у файлі `settings.xml` замість `YOUR_GITHUB_TOKEN`
+
+Замініть у конфігурації:
+- `YOUR_GITHUB_USERNAME` на ваше ім'я користувача GitHub
+- `YOUR_GITHUB_TOKEN` на токен, який ви щойно створили
