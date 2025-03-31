@@ -122,4 +122,20 @@ public class ScheduleController {
             return "schedule/add-form";
         }
     }
+
+    // Додаємо метод для видалення реєстрації
+    @PostMapping("/delete-enrollment")
+    public String deleteEnrollment(
+            @RequestParam("studentName") String studentName,
+            @RequestParam("courseName") String courseName) {
+        
+        try {
+            // Видалення реєстрації за ім'ям студента та назвою курсу
+            enrollmentService.deleteByStudentNameAndCourseName(studentName, courseName);
+            return "redirect:/schedule/list";
+        } catch (Exception e) {
+            // У випадку помилки також перенаправляємо на список
+            return "redirect:/schedule/list";
+        }
+    }
 }

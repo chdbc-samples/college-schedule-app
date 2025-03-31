@@ -3,6 +3,7 @@ package com.college.controller;
 import com.college.MainApp;
 import com.college.entity.Course;
 import com.college.entity.Department;
+import com.college.entity.Enrollment;
 import com.college.entity.Room;
 import com.college.entity.Teacher;
 import com.college.entity.Student;
@@ -17,6 +18,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -48,6 +51,9 @@ public class ScheduleControllerIntegrationTest {
 
     @Autowired
     private StudentService studentService;
+
+    @Autowired
+    private EnrollmentService enrollmentService;
 
     private Department department;
     private Teacher teacher;
@@ -148,5 +154,31 @@ public class ScheduleControllerIntegrationTest {
                 .andExpect(model().attributeExists("rooms"))
                 .andExpect(model().attributeExists("students"))
                 .andExpect(model().attributeExists("classSchedule"));
+    }
+
+    @Test
+    void deleteEnrollment_ShouldDeleteAndRedirect() throws Exception {
+        // Створюємо тестову реєстрацію
+        Enrollment enrollment = new Enrollment();
+        enrollment.setStudent(student);
+        enrollment.setCourse(course);
+        enrollment.setEnrollmentDate(LocalDate.now());
+        enrollmentService.save(enrollment);
+
+        // Тестуємо видалення реєстрації
+        mockMvc.perform(MockMvcRequestBuilders.post("/schedule/delete-enrollment")
+                .param("studentName", student.getFirstName() + " " + student.getLastName())
+                .param("courseName", course.getCourseName()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/schedule/list"));
+    }
+
+    @Test
+    void deleteEnrollment_WithInvalidData_ShouldRedirect() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/schedule/delete-enrollment")
+                .param("studentName", "Неіснуючий Студент")
+                .param("courseName", "Неіснуючий Курс"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/schedule/list"));
     }
 }
