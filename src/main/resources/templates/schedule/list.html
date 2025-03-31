@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Список занять</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Розклад занять</h2>
+            <a href="/schedule/add" class="btn btn-primary">Додати нове заняття</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Студент</th>
+                        <th>Курс</th>
+                        <th>Ім'я викладача</th>
+                        <th>Прізвище викладача</th>
+                        <th>Кафедра</th>
+                        <th>Аудиторія</th>
+                        <th>Кількість місць</th>
+                        <th>Семестр</th>
+                        <th>Рік</th>
+                        <th>Початок заняття</th>
+                        <th>Закінчення заняття</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="schedule : ${schedules}">
+                        <td th:text="${schedule.studentFirstName + ' ' + schedule.studentLastName}"></td>
+                        <td th:text="${schedule.courseName}"></td>
+                        <td th:text="${schedule.teacherFirstName}"></td>
+                        <td th:text="${schedule.teacherLastName}"></td>
+                        <td th:text="${schedule.departmentName}"></td>
+                        <td th:text="${schedule.roomNumber}"></td>
+                        <td th:text="${schedule.roomCapacity}"></td>
+                        <td th:text="${schedule.semester}"></td>
+                        <td th:text="${schedule.year}"></td>
+                        <td th:text="${schedule.startTime}"></td>
+                        <td th:text="${schedule.endTime}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

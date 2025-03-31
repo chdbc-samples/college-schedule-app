@@ -1,4 +1,4 @@
-package com.college;
+package com.college.entity;
 
 import javax.persistence.*;
 import java.time.LocalTime;
@@ -9,7 +9,7 @@ public class ClassSchedule {
     @Id
     @Column(name = "schedule_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int scheduleId;
+    private Long scheduleId;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -24,6 +24,8 @@ public class ClassSchedule {
     private Room room;
 
     private String semester;
+    
+    @Column(name = "\"year\"")
     private int year;
 
     @Column(name = "start_time")
@@ -33,11 +35,11 @@ public class ClassSchedule {
     private LocalTime endTime;
 
     // Getters and Setters
-    public int getScheduleId() {
+    public Long getScheduleId() {
         return scheduleId;
     }
 
-    public void setScheduleId(int scheduleId) {
+    public void setScheduleId(Long scheduleId) {
         this.scheduleId = scheduleId;
     }
 

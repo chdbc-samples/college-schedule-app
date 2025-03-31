@@ -1,4 +1,4 @@
-package com.college;
+package com.college.entity;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ public class Course {
     @Id
     @Column(name = "course_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int courseId;
+    private Long courseId;
 
     @Column(name = "course_name")
     private String courseName;
@@ -24,15 +24,15 @@ public class Course {
     private List<ClassSchedule> classSchedules;
 
     // Getters and Setters
-    public int getCourseId() {
+    public Long getCourseId() {
         return courseId;
     }
 
-    public void setCourseId(int courseId) {
+    public void setCourseId(Long courseId) {
         this.courseId = courseId;
     }
 
-    public String getName() {
+    public String getCourseName() {
         return courseName;
     }
 

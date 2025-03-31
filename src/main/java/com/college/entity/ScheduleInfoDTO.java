@@ -1,4 +1,4 @@
-package com.college;
+package com.college.entity;
 
 import java.time.LocalTime;
 
@@ -10,13 +10,19 @@ public class ScheduleInfoDTO {
     private String courseName;
     private String departmentName;
     private String roomNumber;
+    private int roomCapacity;
     private String semester;
     private int year;
     private LocalTime startTime;
     private LocalTime endTime;
 
     // Constructor
-    public ScheduleInfoDTO(String studentFirstName, String studentLastName, String teacherFirstName, String teacherLastName, String courseName, String departmentName, String roomNumber, String semester, int year, LocalTime startTime, LocalTime endTime) {
+    public ScheduleInfoDTO(String studentFirstName, String studentLastName, 
+                         String teacherFirstName, String teacherLastName, 
+                         String courseName, String departmentName, 
+                         String roomNumber, int roomCapacity,
+                         String semester, int year, 
+                         LocalTime startTime, LocalTime endTime) {
         this.studentFirstName = studentFirstName;
         this.studentLastName = studentLastName;
         this.teacherFirstName = teacherFirstName;
@@ -24,6 +30,7 @@ public class ScheduleInfoDTO {
         this.courseName = courseName;
         this.departmentName = departmentName;
         this.roomNumber = roomNumber;
+        this.roomCapacity = roomCapacity;
         this.semester = semester;
         this.year = year;
         this.startTime = startTime;
@@ -85,6 +92,14 @@ public class ScheduleInfoDTO {
 
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
+    }
+
+    public int getRoomCapacity() {
+        return roomCapacity;
+    }
+
+    public void setRoomCapacity(int roomCapacity) {
+        this.roomCapacity = roomCapacity;
     }
 
     public String getSemester() {

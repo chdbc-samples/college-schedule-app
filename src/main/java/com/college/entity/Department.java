@@ -1,4 +1,4 @@
-package com.college;
+package com.college.entity;
 
 import javax.persistence.*;
 
@@ -8,7 +8,7 @@ public class Department {
     @Id
     @Column(name = "department_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int departmentId;
+    private Long departmentId;
 
     @Column(name = "name")
     private String name;
@@ -17,11 +17,11 @@ public class Department {
     private String location;
 
     // Getters and Setters
-    public int getDepartmentId() {
+    public Long getDepartmentId() {
         return departmentId;
     }
 
-    public void setDepartmentId(int departmentId) {
+    public void setDepartmentId(Long departmentId) {
         this.departmentId = departmentId;
     }
 

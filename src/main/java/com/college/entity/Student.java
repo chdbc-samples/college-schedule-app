@@ -1,14 +1,14 @@
-package com.college;
+package com.college.entity;
 
 import javax.persistence.*;
 
 @Entity
-@Table(name = "teachers")
-public class Teacher {
+@Table(name = "students")
+public class Student {
     @Id
-    @Column(name = "teacher_id")
+    @Column(name = "student_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int teacherId;
+    private Long studentId;
 
     @Column(name = "first_name")
     private String firstName;
@@ -21,12 +21,12 @@ public class Teacher {
     private Department department;
 
     // Getters and Setters
-    public int getTeacherId() {
-        return teacherId;
+    public Long getStudentId() {
+        return studentId;
     }
 
-    public void setTeacherId(int teacherId) {
-        this.teacherId = teacherId;
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
     }
 
     public String getFirstName() {

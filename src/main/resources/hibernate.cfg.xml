@@ -4,36 +4,36 @@
 
 <hibernate-configuration>
     <session-factory>
-        <!-- JDBC Database connection settings -->
+        <!-- Параметри підключення до бази даних -->
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
         <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/college_db</property>
         <property name="hibernate.connection.username">postgres</property>
-        <property name="hibernate.connection.password">*****</property>
+        <property name="hibernate.connection.password">placeholder_password</property>
 
-        <!-- JDBC connection pool settings -->
+        <!-- Налаштування пулу з'єднань JDBC -->
         <property name="hibernate.c3p0.min_size">5</property>
         <property name="hibernate.c3p0.max_size">20</property>
 
-        <!-- SQL dialect -->
+        <!-- SQL діалект -->
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
-        <!-- Echo all executed SQL to stdout -->
+        <!-- Виведення SQL-запитів у консоль -->
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.format_sql">true</property>
 
-        <!-- Drop and re-create the database schema on startup -->
+        <!-- Скидання та створення схеми бази даних при запуску -->
         <property name="hibernate.hbm2ddl.auto">create</property>
 
-        <!-- Configure the current session context -->
+        <!-- Налаштування поточного контексту сесії -->
         <property name="hibernate.current_session_context_class">thread</property>
 
-        <!-- List of annotated entity classes -->
-        <mapping class="com.college.Department"/>
-        <mapping class="com.college.Teacher"/>
-        <mapping class="com.college.Student"/>
-        <mapping class="com.college.Course"/>
-        <mapping class="com.college.Room"/>
-        <mapping class="com.college.ClassSchedule"/>
-        <mapping class="com.college.Enrollment"/>
+        <!-- Перелік анотованих класів-сутностей -->
+        <mapping class="com.college.entity.Department"/>
+        <mapping class="com.college.entity.Teacher"/>
+        <mapping class="com.college.entity.Student"/>
+        <mapping class="com.college.entity.Course"/>
+        <mapping class="com.college.entity.Room"/>
+        <mapping class="com.college.entity.ClassSchedule"/>
+        <mapping class="com.college.entity.Enrollment"/>
     </session-factory>
 </hibernate-configuration>
