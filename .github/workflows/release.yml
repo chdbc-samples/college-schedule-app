@@ -1,0 +1,72 @@
+# Workflow для автоматичного створення релізів
+name: Create Release
+
+# Запускається при створенні тегу, що починається з 'v'
+# Наприклад: v1.0.0, v2.1.3 тощо
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    # Надання необхідних дозволів
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      # Отримання коду
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Потрібно для генерації changelog
+
+      # Налаштування JDK
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          server-id: github  # Ідентифікатор серверу в settings.xml
+          server-username: GITHUB_ACTOR  # Автоматично містить ім'я користувача
+          server-password: GITHUB_TOKEN  # Автоматично генерується GitHub Actions
+
+      # Збірка проекту
+      - name: Build with Maven
+        run: mvn -B package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Публікація в GitHub Packages
+      - name: Publish to GitHub Packages
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Додаємо змінну середовища для бази даних, щоб тести пройшли успішно
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      # Генерація changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: ".github/changelog-config.json"
+          commitMode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Створення релізу
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            target/*.jar
+            README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

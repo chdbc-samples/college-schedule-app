@@ -25,6 +25,7 @@
                         <th>Рік</th>
                         <th>Початок заняття</th>
                         <th>Закінчення заняття</th>
+                        <th>Дії</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,10 +41,23 @@
                         <td th:text="${schedule.year}"></td>
                         <td th:text="${schedule.startTime}"></td>
                         <td th:text="${schedule.endTime}"></td>
+                        <td>
+                            <!-- Кнопка видалення запису -->
+                            <form th:action="@{/schedule/delete-enrollment}" method="post" style="display: inline;">
+                                <input type="hidden" name="studentName" th:value="${schedule.studentFirstName + ' ' + schedule.studentLastName}" />
+                                <input type="hidden" name="courseName" th:value="${schedule.courseName}" />
+                                <button type="submit" class="btn btn-danger btn-sm" 
+                                        onclick="return confirm('Ви впевнені, що хочете видалити цей запис?')">
+                                    <i class="bi bi-trash"></i> Видалити
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+    <!-- Додавання іконок Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 </body>
 </html>
