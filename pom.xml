@@ -104,6 +104,7 @@
     </repository>
   </distributionManagement>
 
+  <!-- Налаштування збірки -->
   <build>
     <plugins>
       <!-- Плагін Spring Boot -->

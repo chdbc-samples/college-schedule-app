@@ -20,7 +20,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 // Інтеграційний тест контролера розкладу
