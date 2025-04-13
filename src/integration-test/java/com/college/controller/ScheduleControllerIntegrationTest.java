@@ -125,7 +125,7 @@ public class ScheduleControllerIntegrationTest {
                 .param("course", course.getCourseId().toString())
                 .param("teacher", teacher.getTeacherId().toString())
                 .param("room", room.getRoomId().toString())
-                .param("semester", "Осінь")
+                .param("semester", "1")
                 .param("year", "2024")
                 .param("startTime", "09:00")
                 .param("endTime", "10:30")

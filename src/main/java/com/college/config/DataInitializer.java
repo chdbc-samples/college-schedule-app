@@ -151,7 +151,7 @@ public class DataInitializer implements CommandLineRunner {
         schedule1.setCourse(course1);
         schedule1.setTeacher(teacher1);
         schedule1.setRoom(room1);
-        schedule1.setSemester("Осінь");
+        schedule1.setSemester("1");
         schedule1.setYear(2024);
         schedule1.setStartTime(LocalTime.parse("09:00:00"));
         schedule1.setEndTime(LocalTime.parse("10:30:00"));
@@ -161,7 +161,7 @@ public class DataInitializer implements CommandLineRunner {
         schedule2.setCourse(course2);
         schedule2.setTeacher(teacher2);
         schedule2.setRoom(room2);
-        schedule2.setSemester("Осінь");
+        schedule2.setSemester("1");
         schedule2.setYear(2024);
         schedule2.setStartTime(LocalTime.parse("11:00:00"));
         schedule2.setEndTime(LocalTime.parse("12:30:00"));

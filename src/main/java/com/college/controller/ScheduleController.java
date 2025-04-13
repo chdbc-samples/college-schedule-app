@@ -72,6 +72,7 @@ public class ScheduleController {
             Model model) {
         
         try {
+            // Перевірка обов'язкових полів
             if (courseId == null || teacherId == null || roomId == null || 
                 semester == null || yearStr == null || 
                 startTime == null || endTime == null || 

@@ -136,7 +136,7 @@ public class ScheduleControllerTest {
 
         String viewName = scheduleController.addSchedule(
             1L, 1L, 1L,
-            "Fall", "2024",
+            "1", "2024",
             "09:00", "10:30",
             Arrays.asList(1L),
             model
