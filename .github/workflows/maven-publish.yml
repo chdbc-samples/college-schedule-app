@@ -5,10 +5,13 @@
 #   і має необхідні права для публікації пакетів
 name: Maven Package
 
-# Запускається при push в гілку main
+# Запускається при пушах в гілку main або при створенні pull request
 on:
   push:
     branches: [ "main" ]
+
+  pull_request:
+    branches: ['*']
 
 jobs:
   build:
