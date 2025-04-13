@@ -80,19 +80,7 @@
         <artifactId>maven-surefire-report-plugin</artifactId>
         <version>3.2.5</version>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.2.5</version>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>integration-test</report>
-              <report>verify</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
+
     </plugins>
   </reporting>
 
@@ -113,7 +101,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
       
-      <!-- Налаштування модульних тестів -->
+      <!-- Налаштування всіх тестів -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -121,43 +109,14 @@
           <argLine>${surefireArgLine}</argLine>
           <includes>
             <include>**/*Test.java</include>
+            <include>**/*IntegrationTest.java</include>
           </includes>
-          <excludes>
-            <exclude>**/*IntegrationTest.java</exclude>
-          </excludes>
           <reportFormat>html</reportFormat>
-          <properties>
-            <property>
-              <name>listener</name>
-              <value>org.sonar.java.jacoco.JUnitListener</value>
-            </property>
-          </properties>
-          <!-- ...existing code... -->
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
         </configuration>
       </plugin>
       
-      <!-- Налаштування інтеграційних тестів -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.2.5</version>
-        <executions>
-          <execution>
-            <id>integration-tests</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>**/*IntegrationTest.java</include>
-              </includes>
-              <reportFormat>html</reportFormat>
-              <reportsDirectory>${project.build.directory}/failsafe-reports</reportsDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+
 
       <!-- Site plugin configuration -->
       <plugin>
@@ -207,6 +166,7 @@
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.11</version>
         <executions>
+          <!-- Test coverage for all tests -->
           <execution>
             <id>default-prepare-agent</id>
             <goals>
@@ -216,8 +176,11 @@
               <propertyName>surefireArgLine</propertyName>
             </configuration>
           </execution>
+          
+          <!-- Unified test report -->
           <execution>
             <id>default-report</id>
+            <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>
@@ -226,29 +189,13 @@
               <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
               <title>${project.name} - Code Coverage Report</title>
               <footer>Code Coverage Report for ${project.name} ${project.version}</footer>
-              <includes>
-                <include>**/*.class</include>
-              </includes>
-              <excludes>
-                <exclude>**/config/**/*</exclude>
-                <exclude>**/MainApp.*</exclude>
-              </excludes>
-              <formats>
-                <format>HTML</format>
-                <format>XML</format>
-                <format>CSV</format>
-              </formats>
             </configuration>
           </execution>
-          <execution>
-            <id>post-test-report</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
+
+          <!-- Coverage checks -->
           <execution>
             <id>default-check</id>
+            <phase>test</phase>
             <goals>
               <goal>check</goal>
             </goals>
@@ -260,32 +207,12 @@
                     <limit>
                       <counter>INSTRUCTION</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
+                      <minimum>0.75</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
-                    </limit>
-                    <limit>
-                      <counter>LINE</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
-                    </limit>
-                    <limit>
-                      <counter>COMPLEXITY</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
-                    </limit>
-                    <limit>
-                      <counter>METHOD</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
-                    </limit>
-                    <limit>
-                      <counter>CLASS</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.01</minimum>
+                      <minimum>0.5</minimum>
                     </limit>
                   </limits>
                 </rule>
