@@ -88,7 +88,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/${project.groupId}/${project.artifactId}</url>
+      <url>https://maven.pkg.github.com/chdbc-samples/college-schedule-app</url>
     </repository>
   </distributionManagement>
 
@@ -118,7 +118,7 @@
       
 
 
-      <!-- Site plugin configuration -->
+      <!-- Налаштування плагіна Site -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
@@ -160,13 +160,13 @@
         </executions>
       </plugin>
 
-      <!-- JaCoCo Plugin -->
+      <!-- Плагін JaCoCo -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.11</version>
         <executions>
-          <!-- Test coverage for all tests -->
+          <!-- Покриття тестами для всіх тестів -->
           <execution>
             <id>default-prepare-agent</id>
             <goals>
@@ -177,7 +177,7 @@
             </configuration>
           </execution>
           
-          <!-- Unified test report -->
+          <!-- Єдиний звіт про тести -->
           <execution>
             <id>default-report</id>
             <phase>test</phase>
@@ -192,7 +192,7 @@
             </configuration>
           </execution>
 
-          <!-- Coverage checks -->
+          <!-- Перевірки покриття -->
           <execution>
             <id>default-check</id>
             <phase>test</phase>

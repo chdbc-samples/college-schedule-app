@@ -31,21 +31,12 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: maven
-        # Налаштування GitHub Packages як цільового репозиторію
-        # GITHUB_ACTOR та GITHUB_TOKEN використовуються для автентифікації
-        # при публікації пакетів в GitHub Packages
-        server-id: github
-        server-username: GITHUB_ACTOR      # Автоматично містить ім'я користувача, який запустив workflow
-        server-password: GITHUB_TOKEN      # Автоматично генерується GitHub Actions
 
     # Крок 3: Збірка проекту з Maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
     # Крок 4: Публікація артефактів в GitHub Packages
-    # Використовуємо GITHUB_TOKEN через змінні середовища
-
     - name: Publish to GitHub Packages
       run: mvn --batch-mode deploy
       env:
