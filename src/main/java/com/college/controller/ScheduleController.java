@@ -72,6 +72,7 @@ public class ScheduleController {
             Model model) {
         
         try {
+            // Перевірка обов'язкових полів
             if (courseId == null || teacherId == null || roomId == null || 
                 semester == null || yearStr == null || 
                 startTime == null || endTime == null || 
@@ -120,6 +121,22 @@ public class ScheduleController {
             model.addAttribute("rooms", roomService.findAll());
             model.addAttribute("classSchedule", new ClassSchedule());
             return "schedule/add-form";
+        }
+    }
+
+    // Додаємо метод для видалення реєстрації
+    @PostMapping("/delete-enrollment")
+    public String deleteEnrollment(
+            @RequestParam("studentName") String studentName,
+            @RequestParam("courseName") String courseName) {
+        
+        try {
+            // Видалення реєстрації за ім'ям студента та назвою курсу
+            enrollmentService.deleteByStudentNameAndCourseName(studentName, courseName);
+            return "redirect:/schedule/list";
+        } catch (Exception e) {
+            // У випадку помилки також перенаправляємо на список
+            return "redirect:/schedule/list";
         }
     }
 }

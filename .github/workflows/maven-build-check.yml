@@ -46,24 +46,18 @@ jobs:
         distribution: 'temurin'
         cache: maven
      
-    - name: Запуск модульних тестів
-      run: mvn clean compile test
+    - name: Запуск модульних і модульних тестів
+      run: mvn clean test
       env:
         SPRING_PROFILES_ACTIVE: test
-
-    # Запуск інтеграційних тестів
-    - name: Запуск інтеграційних тестів
-      run: mvn verify -DskipUnitTests
-      env:
         DB_PASSWORD: postgres
-        SPRING_PROFILES_ACTIVE: test
 
     # Генерація звітів
     - name: Генерація звітів
       run: mvn site
 
-    # Завантаження звітів про тести
-    - name: Генерація і завантаження звітів
+    # Завантаження звітів про результати тестування
+    - name: завантаження звітів
       if: always()
       uses: actions/upload-artifact@v4
       with:

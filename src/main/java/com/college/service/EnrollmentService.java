@@ -6,11 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class EnrollmentService {
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     private final EnrollmentRepository enrollmentRepository;
 
     @Autowired
@@ -38,8 +43,38 @@ public class EnrollmentService {
 
     @Transactional
     public Enrollment enroll(Enrollment enrollment) {
-        // Additional business logic can be added here
-        // such as checking course capacity, prerequisites, etc.
+        // Додаткова бізнес-логіка може бути додана тут
+        // наприклад, перевірка місткості курсу, передумов тощо.
         return enrollmentRepository.save(enrollment);
+    }
+
+    // Додаємо новий метод для пошуку реєстрації за ім'ям студента та назвою курсу
+    @SuppressWarnings("unchecked")
+    public List<Enrollment> findByStudentNameAndCourseName(String studentName, String courseName) {
+        String[] nameParts = studentName.split(" ");
+        String firstName = nameParts[0];
+        String lastName = nameParts[1];
+        
+        String jpql = "SELECT e FROM Enrollment e " +
+                     "JOIN e.student s " +
+                     "JOIN e.course c " +
+                     "WHERE s.firstName = :firstName " +
+                     "AND s.lastName = :lastName " +
+                     "AND c.courseName = :courseName";
+        
+        return entityManager.createQuery(jpql)
+                .setParameter("firstName", firstName)
+                .setParameter("lastName", lastName)
+                .setParameter("courseName", courseName)
+                .getResultList();
+    }
+
+    // Додаємо метод для видалення реєстрації за ім'ям студента та назвою курсу
+    @Transactional
+    public void deleteByStudentNameAndCourseName(String studentName, String courseName) {
+        List<Enrollment> enrollments = findByStudentNameAndCourseName(studentName, courseName);
+        for (Enrollment enrollment : enrollments) {
+            enrollmentRepository.delete(enrollment);
+        }
     }
 }

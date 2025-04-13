@@ -11,11 +11,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -26,15 +28,21 @@ public class EnrollmentServiceTest {
     @Mock
     private EnrollmentRepository enrollmentRepository;
 
+    @Mock
+    private EntityManager entityManager;
+
     @InjectMocks
     private EnrollmentService enrollmentService;
 
     private Enrollment enrollment;
     private Student student;
     private Course course;
+    private javax.persistence.Query query;
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(enrollmentService, "entityManager", entityManager);
+        
         student = new Student();
         student.setStudentId(1L);
         student.setFirstName("Test");
@@ -50,6 +58,8 @@ public class EnrollmentServiceTest {
         enrollment.setStudent(student);
         enrollment.setCourse(course);
         enrollment.setEnrollmentDate(LocalDate.now());
+
+        query = mock(javax.persistence.Query.class);
     }
 
     @Test
@@ -106,5 +116,62 @@ public class EnrollmentServiceTest {
         enrollmentService.deleteById(1L);
 
         verify(enrollmentRepository).deleteById(1L);
+    }
+
+    @Test
+    void findByStudentNameAndCourseName_ShouldReturnEnrollments() {
+        when(entityManager.createQuery(anyString())).thenReturn(query);
+        when(query.setParameter("firstName", "Test")).thenReturn(query);
+        when(query.setParameter("lastName", "Student")).thenReturn(query);
+        when(query.setParameter("courseName", "Test Course")).thenReturn(query);
+        when(query.getResultList()).thenReturn(Arrays.asList(enrollment));
+
+        List<Enrollment> result = enrollmentService.findByStudentNameAndCourseName("Test Student", "Test Course");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getStudent().getFirstName()).isEqualTo("Test");
+        assertThat(result.get(0).getStudent().getLastName()).isEqualTo("Student");
+        assertThat(result.get(0).getCourse().getCourseName()).isEqualTo("Test Course");
+        verify(entityManager).createQuery(anyString());
+        verify(query).setParameter("firstName", "Test");
+        verify(query).setParameter("lastName", "Student");
+        verify(query).setParameter("courseName", "Test Course");
+        verify(query).getResultList();
+    }
+
+    @Test
+    void findByStudentNameAndCourseName_WhenNoResults_ShouldReturnEmptyList() {
+        when(entityManager.createQuery(anyString())).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(Arrays.asList());
+
+        List<Enrollment> result = enrollmentService.findByStudentNameAndCourseName("Test Student", "Test Course");
+
+        assertThat(result).isEmpty();
+        verify(entityManager).createQuery(anyString());
+        verify(query).getResultList();
+    }
+
+    @Test
+    void deleteByStudentNameAndCourseName_ShouldDeleteFoundEnrollments() {
+        when(entityManager.createQuery(anyString())).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(Arrays.asList(enrollment));
+        doNothing().when(enrollmentRepository).delete(any(Enrollment.class));
+
+        enrollmentService.deleteByStudentNameAndCourseName("Test Student", "Test Course");
+
+        verify(enrollmentRepository).delete(enrollment);
+    }
+
+    @Test
+    void deleteByStudentNameAndCourseName_WhenNoEnrollments_ShouldNotCallDelete() {
+        when(entityManager.createQuery(anyString())).thenReturn(query);
+        when(query.setParameter(anyString(), any())).thenReturn(query);
+        when(query.getResultList()).thenReturn(Arrays.asList());
+
+        enrollmentService.deleteByStudentNameAndCourseName("Test Student", "Test Course");
+
+        verify(enrollmentRepository, never()).delete(any());
     }
 }
