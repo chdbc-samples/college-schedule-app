@@ -21,8 +21,17 @@
   <!-- Властивості проекту -->
   <properties>
     <java.version>17</java.version>
+    <project.scm.id>github</project.scm.id>
   </properties>
-  
+
+  <!-- SCM Information -->
+  <scm>
+    <connection>scm:git:https://github.com/chdbc-samples/college-schedule-app.git</connection>
+    <developerConnection>scm:git:https://github.com/chdbc-samples/college-schedule-app.git</developerConnection>
+    <url>https://github.com/chdbc-samples/college-schedule-app</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <!-- Залежності проекту -->
   <dependencies>
     <!-- Стартери Spring Boot -->
@@ -220,6 +229,19 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- Maven Release Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.1</version>
+        <configuration>
+          <tagNameFormat>v@{project.version}</tagNameFormat>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <releaseProfiles>release</releaseProfiles>
+          <goals>deploy</goals>
+        </configuration>
       </plugin>
     </plugins>
     

@@ -1,0 +1,74 @@
+# Workflow для автоматичного створення релізів
+name: Maven Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+      developmentVersion:
+        description: 'Next development version (e.g., 1.0.1-SNAPSHOT)'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Configure Git user
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
+      - name: Prepare Release
+        run: |
+          mvn release:prepare \
+          -DreleaseVersion=${{ github.event.inputs.releaseVersion }} \
+          -DdevelopmentVersion=${{ github.event.inputs.developmentVersion }} \
+          -DtagNameFormat="v@{project.version}" \
+          -B
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Perform Release
+        run: mvn release:perform
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Генерація changelog
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: ".github/changelog-config.json"
+          commitMode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.event.inputs.releaseVersion }}
+          name: Release v${{ github.event.inputs.releaseVersion }}
+          draft: true
+          prerelease: true
+          files: |
+            target/*.jar
+            README.md
+            CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
