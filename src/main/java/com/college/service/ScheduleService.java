@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
+import java.util.Collections;
 
 @Service
 public class ScheduleService {
@@ -17,23 +18,26 @@ public class ScheduleService {
     public ScheduleService(ClassScheduleRepository classScheduleRepository) {
     }
 
-    @SuppressWarnings("unchecked")
     public List<ScheduleInfoDTO> getScheduleInfo() {
-        String jpql = "SELECT new com.college.entity.ScheduleInfoDTO(" +
-                "s.firstName, s.lastName, " +
-                "t.firstName, t.lastName, " +
-                "c.courseName, d.name, " +
-                "r.roomNumber, r.capacity, " +
-                "cs.semester, cs.year, " +
-                "cs.startTime, cs.endTime) " +
-                "FROM Enrollment e " +
-                "JOIN e.student s " +
-                "JOIN e.course c " +
-                "JOIN c.classSchedules cs " +
-                "JOIN cs.teacher t " +
-                "JOIN c.department d " +
-                "JOIN cs.room r";
-            
-        return entityManager.createQuery(jpql).getResultList();
+        try {
+            String jpql = "SELECT new com.college.entity.ScheduleInfoDTO(" +
+                    "s.firstName, s.lastName, " +
+                    "t.firstName, t.lastName, " +
+                    "c.courseName, d.name, " +
+                    "r.roomNumber, r.capacity, " +
+                    "cs.semester, cs.year, " +
+                    "cs.startTime, cs.endTime) " +
+                    "FROM Enrollment e " +
+                    "JOIN e.student s " +
+                    "JOIN e.course c " +
+                    "JOIN c.classSchedules cs " +
+                    "JOIN cs.teacher t " +
+                    "JOIN c.department d " +
+                    "JOIN cs.room r";
+                
+            return entityManager.createQuery(jpql, ScheduleInfoDTO.class).getResultList();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }
