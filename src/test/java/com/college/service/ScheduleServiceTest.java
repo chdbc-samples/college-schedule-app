@@ -47,7 +47,7 @@ public class ScheduleServiceTest {
             "Test Department",
             "101",
             30,
-            "Fall",
+            "1",
             2024,
             LocalTime.of(9, 0),
             LocalTime.of(10, 30)
@@ -86,7 +86,7 @@ public class ScheduleServiceTest {
         assertThat(dto.getDepartmentName()).isEqualTo("Test Department");
         assertThat(dto.getRoomNumber()).isEqualTo("101");
         assertThat(dto.getRoomCapacity()).isEqualTo(30);
-        assertThat(dto.getSemester()).isEqualTo("Fall");
+        assertThat(dto.getSemester()).isEqualTo("1");
         assertThat(dto.getYear()).isEqualTo(2024);
         assertThat(dto.getStartTime()).isEqualTo(LocalTime.of(9, 0));
         assertThat(dto.getEndTime()).isEqualTo(LocalTime.of(10, 30));

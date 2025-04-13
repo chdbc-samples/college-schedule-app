@@ -83,7 +83,7 @@ public class ScheduleControllerTest {
         classSchedule.setCourse(course);
         classSchedule.setTeacher(teacher);
         classSchedule.setRoom(room);
-        classSchedule.setSemester("Fall");
+        classSchedule.setSemester("1");
         classSchedule.setYear(2024);
         classSchedule.setStartTime(LocalTime.of(9, 0));
         classSchedule.setEndTime(LocalTime.of(10, 30));
