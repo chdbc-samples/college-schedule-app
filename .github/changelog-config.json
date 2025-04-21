@@ -2,19 +2,27 @@
     "categories": [
         {
             "title": "## 🚀 Нові функції",
-            "labels": ["feature", "enhancement"]
+            "labels": ["feature"]
         },
         {
             "title": "## 🐛 Виправлення",
-            "labels": ["fix", "bug"]
+            "labels": ["bug"]
         },
         {
             "title": "## 📝 Документація",
             "labels": ["documentation"]
         },
         {
-            "title": "## ⚡ Оптимізація",
-            "labels": ["performance", "optimization"]
+            "title": "## ⚙️ CI/CD",
+            "labels": ["Continuous Integration", "Continuous Delivery", "Continuous Deployment"]
+        },
+        {
+            "title": "## ♻️ Рефакторинг",
+            "labels": ["refactor"]
+        },
+        {
+            "title": "## ✅ Тестування",
+            "labels": ["test"]
         },
         {
             "title": "## 🔨 Інші зміни",
@@ -36,12 +44,12 @@
     ],
     "transformers": [
         {
-            "pattern": "^[Bb]uild",
-            "target": "🏗️ Build"
+             "pattern": "^[Cc]d",
+            "target": "⚙️ Continuous Delivery / Deployment"
         },
         {
             "pattern": "^[Cc]i",
-            "target": "⚙️ CI"
+            "target": "⚙️ Continuous Integration"
         },
         {
             "pattern": "^[Dd]ocs?",
@@ -54,14 +62,6 @@
         {
             "pattern": "^[Ff]ix",
             "target": "🐛 Fix"
-        },
-        {
-            "pattern": "^[Pp]erf",
-            "target": "⚡ Performance"
-        },
-        {
-            "pattern": "^[Rr]efactor",
-            "target": "♻️ Refactor"
         },
         {
             "pattern": "^[Tt]est",
