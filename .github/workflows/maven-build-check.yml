@@ -52,10 +52,6 @@ jobs:
         SPRING_PROFILES_ACTIVE: test
         DB_PASSWORD: postgres
 
-    # Генерація звітів
-    - name: Генерація звітів
-      run: mvn site
-
     # Завантаження звітів про результати тестування
     - name: завантаження звітів
       if: always()
