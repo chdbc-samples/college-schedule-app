@@ -54,8 +54,11 @@ jobs:
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v4
         with:
+          # Explicitly set the tag we just created as the 'to' tag.
+          # The action will automatically find the previous tag for 'from'.
+          toTag: v${{ github.event.inputs.releaseVersion }}
           configuration: ".github/changelog-config.json"
-          commitMode: true
+          # Remove commitMode as we are comparing tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -64,6 +67,8 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.releaseVersion }}
           name: Release v${{ github.event.inputs.releaseVersion }}
+          # Use the generated changelog as the release body
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: true
           prerelease: true
           files: |
