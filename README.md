@@ -12,9 +12,10 @@
 # Кроки для запуску програми і відкриття web-interface в Windows PowerShell
 1. Встановіть локально PostgreSQL, Maven та Java.
 2. Створіть базу даних college_db.
-3. Відкрийте PowerShell і виконайте неступну команду для відображення символів в UTF-8 кодуванні: `chcp 65001`
-4. Запустіть програму в PowerShell за допомогою команди: `mvn -DDB_PASSWORD="пароль-до-бази-даних" exec:java -D"exec.mainClass=com.college.MainApp"`.
-5. Відкрийте web-interface в браузері за адресою localhost:8080
+3. Відкрийте PowerShell і виконайте неступну команду для відображення символів в UTF-8 кодуванні: `chcp 65001`.
+4. Зберіть проект за допомогою команди: `mvn clean install`.
+5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="пароль-до-бази-даних" exec:java -D"exec.mainClass=com.college.MainApp"`.
+6. Відкрийте web-interface в браузері за адресою localhost:8080
 ```
 
 ## Публікація артефактів
