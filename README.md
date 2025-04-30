@@ -14,8 +14,8 @@
 2. Створіть базу даних college_db.
 3. Відкрийте PowerShell і виконайте неступну команду для відображення символів в UTF-8 кодуванні: `chcp 65001`.
 4. Зберіть проект за допомогою команди: `mvn clean install`.
-5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="пароль-до-бази-даних" exec:java -D"exec.mainClass=com.college.MainApp"`.
-6. Відкрийте web-interface в браузері за адресою localhost:8080
+5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="postgres" exec:java -D"exec.mainClass=com.college.MainApp"`.
+6. Відкрийте web-interface в браузері за адресою localhost
 ```
 
 ## Публікація артефактів
