@@ -37,7 +37,7 @@ jobs:
       run: mvn -B package --file pom.xml
 
     # Крок 4: Публікація артефактів в GitHub Packages
-    - name: Publish to GitHub Packages
+    - name: Publish to GitHub Packages from fork
       run: mvn --batch-mode deploy
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Автоматично створений токен з правами на публікацію
