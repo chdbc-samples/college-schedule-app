@@ -5,7 +5,7 @@
 1. Зберіть програму за допомогою команди: `mvn clean install`.
 1. Запустіть програму за допомогою команди: `mvn exec:java -D"exec.mainClass=com.college.MainApp"`.
 
-# Результати виконання програми
+# Результати виконання програми 
 ```
 Nov 06, 2024 2:43:34 AM org.hibernate.Version logVersion
 INFO: HHH000412: Hibernate ORM core version 5.6.14.Final
