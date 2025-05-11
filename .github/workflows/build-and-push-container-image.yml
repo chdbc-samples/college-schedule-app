@@ -1,0 +1,61 @@
+name: Build and Push Container Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (defaults to version in pom.xml)'
+        required: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download JAR from GitHub Packages
+        run: |
+          # Create Maven settings with GitHub authentication
+          mkdir -p ~/.m2
+          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          
+          # Download the artifact from GitHub Packages
+          mvn dependency:copy -Dartifact=com.college:college-schedule:${{ steps.version.outputs.VERSION }}:jar -DoutputDirectory=./build
+
+          # Copy the JAR to the right location for Docker build
+          cp ./build/college-schedule-${{ steps.version.outputs.VERSION }}.jar ./build/app.jar
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./build
+          push: true
+          tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.version.outputs.VERSION }}

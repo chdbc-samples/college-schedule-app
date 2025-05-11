@@ -1,0 +1,77 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version of the app to deploy'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Azure CLI
+        uses: azure/cli@v1.0.0
+        with:
+          inlineScript: |
+            az config set extension.use_dynamic_install=yes_without_prompt
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare environment variables for Docker Compose
+        run: |
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY=${{ github.repository }}" >> $GITHUB_ENV
+
+      - name: Deploy using Docker Compose
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: college-schedule-app
+          images: ghcr.io/${{ github.repository }}/college-schedule-app:${{ github.event.inputs.version }}
+
+      - name: Deploy MongoDB if needed
+        run: |
+          # Check if MongoDB is already deployed
+          if ! az cosmosdb check-name-exists --name college-schedule-mongodb; then
+            # Create MongoDB instance
+            az cosmosdb create --name college-schedule-mongodb --resource-group college-schedule-rg --kind MongoDB
+          fi
+
+      - name: Configure App Settings
+        run: |
+          # Set the connection string and other app settings
+          MONGODB_CONNECTION_STRING=$(az cosmosdb keys list --name college-schedule-mongodb --resource-group college-schedule-rg --type connection-strings --query connectionStrings[0].connectionString -o tsv)
+          
+          az webapp config appsettings set --name college-schedule-app --resource-group college-schedule-rg --settings \
+            SPRING_PROFILES_ACTIVE=prod \
+            SPRING_DATA_MONGODB_URI=$MONGODB_CONNECTION_STRING \
+            SPRING_DATA_MONGODB_DATABASE=college
+
+      - name: Health check
+        run: |
+          # Wait for the application to start
+          sleep 30
+          # Get the app URL 
+          APP_URL=$(az webapp show --name college-schedule-app --resource-group college-schedule-rg --query defaultHostName -o tsv)
+          # Perform a health check
+          curl -f https://$APP_URL/actuator/health || exit 1
+
+      - name: Deployment verification
+        run: |
+          echo "Deployment completed successfully!"
+          echo "App URL: https://$(az webapp show --name college-schedule-app --resource-group college-schedule-rg --query defaultHostName -o tsv)"
