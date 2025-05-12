@@ -1,0 +1,103 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/repository/college-schedule-app
+  pullPolicy: Always
+  tag: ""  # Will be overridden
+
+imagePullSecrets:
+  - name: github-registry
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: college-schedule.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    username: "postgresql" # Default username, consider using secrets for production
+    password: "postgresql" # Default password, MUST be overridden by a secret in production
+    database: "collegedb" # Default database name
+    # existingSecret: "" # Optionally, specify an existing secret for PostgreSQL credentials
+    # secretKeys:
+    #   userPasswordKey: postgresql-password # Key in the existing secret for the user password
+    #   adminPasswordKey: postgresql-postgres-password # Key in the existing secret for the admin/postgres password
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+    # resources:
+    #   limits:
+    #     cpu: 500m
+    #     memory: 512Mi
+    #   requests:
+    #     cpu: 250m
+    #     memory: 256Mi
+
+# Application config
+applicationConfig:
+  springProfiles: "prod" # Ensure this profile configures Spring Boot for PostgreSQL
+  # Example for PostgreSQL connection if not using Spring Boot's auto-configuration via classpath
+  # springDatasourceUrl: "jdbc:postgresql://{{ include \\"college-schedule.fullname\\" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+  # springDatasourceUsername: "{{ .Values.postgresql.auth.username }}"
+  # springDatasourcePasswordSecret: "{{ include \\"college-schedule.fullname\\" . }}-postgresql" # Name of the secret holding the password
+  # springDatasourcePasswordSecretKey: "postgresql-password" # Key in the secret for the password
+  logLevel: "INFO" # Root log level for the application (e.g., INFO, DEBUG, TRACE)
+  jpaDdlAuto: "validate" # Spring Boot JPA DDL auto setting (e.g., validate, update, create, create-drop)
+  jsonLogging:
+    enabled: false # Set to true to enable JSON formatted logs for easier parsing by log aggregators
+  packageLogLevels: {}
+    # Example:
+    # com.college: "DEBUG"
+    # org.springframework.web: "INFO"
