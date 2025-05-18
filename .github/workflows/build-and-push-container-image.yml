@@ -1,0 +1,95 @@
+name: Build and Push Container Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_to_download:
+        description: 'Version of the artifact to download from GitHub Packages'
+        required: true
+      docker_tag:
+        description: 'Tag to use for the Docker image'
+        required: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        # When dispatched, github.ref is the ref that was passed to the dispatch call
+        ref: ${{ github.ref }}
+
+    - name: Set up Java for accessing GitHub Packages
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure Maven settings
+      run: |
+        mkdir -p ~/.m2
+        echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers><profiles><profile><id>github</id><repositories><repository><id>github</id><url>https://maven.pkg.github.com/${{ github.repository }}</url><snapshots><enabled>true</enabled></snapshots></repository></repositories></profile></profiles><activeProfiles><activeProfile>github</activeProfile></activeProfiles></settings>" > ~/.m2/settings.xml
+
+    - name: Use passed inputs and download artifact
+      id: get-artifact
+      run: |
+        echo "Triggered by workflow_dispatch. Using provided inputs."
+        VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}" # e.g., 0.3.0-SNAPSHOT
+        DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"                  # e.g., 0.3.0-pr-27
+        
+        ARTIFACT_ID="college-schedule"
+
+        # Name of the JAR file as it's expected to be found in the local .m2 repo after download,
+        # based on your observation.
+        LOCAL_DOWNLOADED_JAR_FILENAME="${ARTIFACT_ID}-${VERSION_FOR_DOWNLOAD_PATH}.jar" # e.g., college-schedule-0.3.0-SNAPSHOT.jar
+
+        echo "Version for download path in repo: ${VERSION_FOR_DOWNLOAD_PATH}"
+        echo "Docker tag to use: ${DOCKER_TAG_TO_USE}"
+        echo "Locally downloaded JAR filename expected in .m2: ${LOCAL_DOWNLOADED_JAR_FILENAME}"
+        
+        # Output DOCKER_TAG for the build step.
+        echo "DOCKER_TAG=${DOCKER_TAG_TO_USE}" >> $GITHUB_OUTPUT
+               
+        mvn dependency:get \
+          -DgroupId=com.college \
+          -DartifactId=${ARTIFACT_ID} \
+          -Dversion=${VERSION_FOR_DOWNLOAD_PATH} \
+          -Dpackaging=jar \
+          -Dclassifier= \
+          -DremoteRepositories=github::default::https://maven.pkg.github.com/${{ github.repository }}
+        
+        # Correct path to the downloaded artifact in the local .m2 repository
+        # using the defined LOCAL_DOWNLOADED_JAR_FILENAME
+        LOCAL_M2_ARTIFACT_PATH="$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${LOCAL_DOWNLOADED_JAR_FILENAME}"
+        
+        echo "Attempting to copy from: ${LOCAL_M2_ARTIFACT_PATH}"
+        cp "${LOCAL_M2_ARTIFACT_PATH}" ./build/app.jar
+        
+        if [ ! -f "./build/app.jar" ]; then
+          echo "Failed to download or copy artifact. Looked for ${LOCAL_M2_ARTIFACT_PATH}"
+          echo "Listing contents of $HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
+          ls -la "$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/"
+          exit 1
+        fi
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./build
+        push: true
+        tags: ghcr.io/${{ github.repository }}:${{ steps.get-artifact.outputs.DOCKER_TAG }}

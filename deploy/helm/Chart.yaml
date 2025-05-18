@@ -1,0 +1,11 @@
+apiVersion: v2
+name: college-schedule
+description: A Helm chart for College Schedule Application
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+dependencies:
+  - name: postgresql
+    version: "14.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
