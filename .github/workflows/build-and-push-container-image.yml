@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+
+  pull_request:
+    branches: ['*']
+
   workflow_dispatch:
     inputs:
       version:
@@ -38,7 +42,13 @@ jobs:
           if [ "${{ github.event.inputs.version }}" != "" ]; then
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              PR_NUMBER=${{ github.event.pull_request.number }}
+              VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)-pr-${PR_NUMBER}
+              echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            else             
+              echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Download JAR from GitHub Packages
