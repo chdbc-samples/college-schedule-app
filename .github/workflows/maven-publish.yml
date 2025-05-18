@@ -46,6 +46,7 @@ jobs:
           PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           ARTIFACT_VERSION=${VERSION}-pr-${PR_NUMBER}
+          echo "VERSION=${ARTIFACT_VERSION}"
           mvn --batch-mode deploy -Dversion=${ARTIFACT_VERSION}
         else
           mvn --batch-mode deploy
