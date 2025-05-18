@@ -8,7 +8,7 @@ name: Maven Package
 # Запускається при пушах в гілку main або при створенні pull request
 on:
   push:
-    branches: [ "main" ] # Restrict push trigger to the main branch
+    branches: ['*']
 
   pull_request:
     branches: ['*']
