@@ -9,6 +9,13 @@ on:
       - main
       - '*'
   workflow_dispatch:
+    inputs:
+      version_to_download:
+        description: 'Version of the artifact to download from GitHub Packages'
+        required: false
+      docker_tag:
+        description: 'Tag to use for the Docker image'
+        required: false
 
 jobs:
   build-and-push:
@@ -45,32 +52,85 @@ jobs:
     - name: Extract version and download artifact
       id: get-artifact
       run: |
-        # Get version from Maven
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-
+        # Determine versions based on trigger type
         if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+          # Triggered by maven-publish completion
+          # We expect version_to_download and docker_tag to be passed from the triggering workflow
+          # However, workflow_run doesn't directly pass inputs like workflow_dispatch does.
+          # We need to rely on the fact that maven-publish has already set the correct version in the pom for PRs
+          # or uses the standard version for main branch.
+          
+          # For PRs, the maven-publish workflow modified the pom's finalName but deployed under the original SNAPSHOT version path.
+          # The actual JAR name will be like college-schedule-0.3.0-pr-23.jar
+          # The version in the repository path will be 0.3.0-SNAPSHOT
+
+          BASE_VERSION_POM=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+
           if [[ "${{ github.event.workflow_run.head_branch }}" == "refs/pull/"* ]]; then
             PR_NUMBER=$(echo "${{ github.event.workflow_run.head_branch }}" | awk -F "/" '{print $3}')
-            VERSION="${VERSION}-pr-${PR_NUMBER}"
+            VERSION_NO_SNAPSHOT=$(echo ${BASE_VERSION_POM} | sed 's/-SNAPSHOT//g')
+            
+            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}" # e.g., 0.3.0-SNAPSHOT
+            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}.jar" # e.g., college-schedule-0.3.0-pr-23.jar
+            DOCKER_TAG_TO_USE="${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}" # e.g., 0.3.0-pr-23
+          else
+            # Main branch or direct push
+            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}"
+            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${BASE_VERSION_POM}.jar"
+            DOCKER_TAG_TO_USE="${BASE_VERSION_POM}"
+          fi
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          # Manual trigger, use inputs if provided, otherwise evaluate from pom
+          if [[ -n "${{ github.event.inputs.version_to_download }}" && -n "${{ github.event.inputs.docker_tag }}" ]]; then
+            VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}"
+            DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"
+            # Infer EXPECTED_JAR_NAME based on docker_tag and artifactId
+            ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"
+            # If docker_tag is a SNAPSHOT, the jar name might not have -SNAPSHOT if finalName was used
+            # This part might need refinement if manual dispatch for PR-like artifacts is common
+            if [[ "${DOCKER_TAG_TO_USE}" == *"-SNAPSHOT"* ]]; then 
+                EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"; 
+            fi
+
+          else
+            # Fallback for manual dispatch if inputs are not provided (should ideally not happen if triggered from maven-publish)
+            BASE_VERSION_POM=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+            ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}"
+            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${BASE_VERSION_POM}.jar"
+            DOCKER_TAG_TO_USE="${BASE_VERSION_POM}"
           fi
         fi
 
-        echo "VERSION=${VERSION}"
-        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Version for download path: ${VERSION_FOR_DOWNLOAD_PATH}"
+        echo "Expected JAR name: ${EXPECTED_JAR_NAME}"
+        echo "Docker tag to use: ${DOCKER_TAG_TO_USE}"
+        
+        echo "VERSION_FOR_DOWNLOAD_PATH=${VERSION_FOR_DOWNLOAD_PATH}" >> $GITHUB_OUTPUT
+        echo "EXPECTED_JAR_NAME=${EXPECTED_JAR_NAME}" >> $GITHUB_OUTPUT
+        echo "DOCKER_TAG=${DOCKER_TAG_TO_USE}" >> $GITHUB_OUTPUT
                
         # Download the artifact
+        # The version in the path is VERSION_FOR_DOWNLOAD_PATH
+        # The artifact file itself will be EXPECTED_JAR_NAME
         mvn dependency:get \
           -DgroupId=com.college \
           -DartifactId=college-schedule \
-          -Dversion=${VERSION} \
+          -Dversion=${VERSION_FOR_DOWNLOAD_PATH} \
           -Dpackaging=jar \
+          -Dclassifier= \
           -DremoteRepositories=github::default::https://maven.pkg.github.com/${{ github.repository }}
         
-        # Copy to build directory
-        cp ~/.m2/repository/com/college/college-schedule/${VERSION}/college-schedule-${VERSION}.jar ./build/app.jar
+        # Copy to build directory, using the expected JAR name
+        # The local Maven repo path will use VERSION_FOR_DOWNLOAD_PATH
+        # The actual file name within that directory will be EXPECTED_JAR_NAME
+        mkdir -p build
+        cp ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME} ./build/app.jar
         
         if [ ! -f "./build/app.jar" ]; then
-          echo "Failed to download artifact"
+          echo "Failed to download or copy artifact. Looked for ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME}"
           exit 1
         fi
 
@@ -79,4 +139,4 @@ jobs:
       with:
         context: ./build
         push: true
-        tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.get-artifact.outputs.VERSION }}
+        tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.get-artifact.outputs.DOCKER_TAG }}

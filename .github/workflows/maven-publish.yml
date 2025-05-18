@@ -35,24 +35,46 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Крок 3: Збірка проекту з Maven
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    # Крок 4: Публікація артефактів в GitHub Packages
+    # Крок 3: Публікація артефактів в GitHub Packages
     - name: Publish to GitHub Packages
+      id: publish
       run: |
+        BASE_VERSION_POM=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+
         if [ "${{ github.event_name }}" == "pull_request" ]; then
           PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          ARTIFACT_VERSION=${VERSION}-pr-${PR_NUMBER}
+          # Remove -SNAPSHOT from base version for the filename part
+          VERSION_NO_SNAPSHOT=$(echo ${BASE_VERSION_POM} | sed 's/-SNAPSHOT//g')
+          FINAL_NAME="${ARTIFACT_ID}-${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}"
           
-          echo "VERSION=${ARTIFACT_VERSION}"
-          echo "VERSION=${ARTIFACT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Pull Request build. Base POM version: ${BASE_VERSION_POM}, PR: ${PR_NUMBER}"
+          echo "Setting finalName in pom.xml to: ${FINAL_NAME}"
+          # Update pom.xml to set the final artifact name
+          mvn versions:set-property -Dproperty=project.build.finalName -DnewVersion=${FINAL_NAME} -DgenerateBackupPoms=false
+          
+          echo "Packaging with updated finalName..."
+          # Package the project again to create the JAR with the new finalName
+          # Tests are assumed to have run in the 'Build with Maven' step, so skip them here.
+          mvn -B package --file pom.xml
 
-          mvn --batch-mode deploy -Dversion=${ARTIFACT_VERSION}
+          echo "Deploying PR artifact. Repository path version: ${BASE_VERSION_POM}, JAR name: ${FINAL_NAME}.jar"
+          # Deploy the artifact. Maven uses the version from pom.xml (BASE_VERSION_POM) for the repository path
+          # and for the version in the deployed POM. The deployed POM will reference FINAL_NAME.
+          mvn --batch-mode deploy --file pom.xml -DskipTests
+          
+          # Output versions for potential use by downstream workflows
+          echo "version_to_download=${BASE_VERSION_POM}" >> $GITHUB_OUTPUT
+          echo "docker_tag=${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
         else
-          mvn --batch-mode deploy
+          # Standard deploy for non-PR builds (e.g., main branch)
+          echo "Main branch or direct push build. Version: ${BASE_VERSION_POM}"
+          # The 'Build with Maven' step should have already packaged the project.
+          echo "Deploying main branch artifact..."
+          mvn --batch-mode deploy --file pom.xml -DskipTests
+
+          echo "version_to_download=${BASE_VERSION_POM}" >> $GITHUB_OUTPUT
+          echo "docker_tag=${BASE_VERSION_POM}" >> $GITHUB_OUTPUT
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,3 +85,4 @@ jobs:
       with:
         workflow: build-and-push-container-image.yml
         token: ${{ secrets.GITHUB_TOKEN }}
+        inputs: '{ "version_to_download": "${{ steps.publish.outputs.version_to_download }}", "docker_tag": "${{ steps.publish.outputs.docker_tag }}" }'
