@@ -8,7 +8,7 @@ name: Maven Package
 # Запускається при пушах в гілку main або при створенні pull request
 on:
   push:
-    branches: [ "*" ]
+    branches: [ "main" ] # Restrict push trigger to the main branch
 
   pull_request:
     branches: ['*']
@@ -86,4 +86,4 @@ jobs:
         workflow: build-and-push-container-image.yml
         token: ${{ secrets.GITHUB_TOKEN }}
         inputs: '{ "version_to_download": "${{ steps.publish.outputs.version_to_download }}", "docker_tag": "${{ steps.publish.outputs.docker_tag }}" }'
-        ref: ${{ github.sha }} # Explicitly set the ref to the commit SHA
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }} # Use branch/tag name
