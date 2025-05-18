@@ -74,16 +74,16 @@ jobs:
           -DremoteRepositories=github::default::https://maven.pkg.github.com/${{ github.repository }}
         
         # Correct path to the downloaded artifact in the local .m2 repository
-        # The artifact is stored under its actual name (EXPECTED_JAR_NAME) 
-        # inside the directory named after its repository version (VERSION_FOR_DOWNLOAD_PATH)
-        LOCAL_M2_ARTIFACT_PATH="~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME}"
+        # using the defined LOCAL_DOWNLOADED_JAR_FILENAME
+        LOCAL_M2_ARTIFACT_PATH="$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${LOCAL_DOWNLOADED_JAR_FILENAME}"
+        
         echo "Attempting to copy from: ${LOCAL_M2_ARTIFACT_PATH}"
         cp "${LOCAL_M2_ARTIFACT_PATH}" ./build/app.jar
         
         if [ ! -f "./build/app.jar" ]; then
           echo "Failed to download or copy artifact. Looked for ${LOCAL_M2_ARTIFACT_PATH}"
-          echo "Listing contents of ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
-          ls -la ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/
+          echo "Listing contents of $HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
+          ls -la "$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/"
           exit 1
         fi
 
