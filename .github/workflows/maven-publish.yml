@@ -42,11 +42,14 @@ jobs:
     # Крок 4: Публікація артефактів в GitHub Packages
     - name: Publish to GitHub Packages
       run: |
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
           PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           ARTIFACT_VERSION=${VERSION}-pr-${PR_NUMBER}
+          
           echo "VERSION=${ARTIFACT_VERSION}"
+          echo "VERSION=${ARTIFACT_VERSION}" >> $GITHUB_OUTPUT
+
           mvn --batch-mode deploy -Dversion=${ARTIFACT_VERSION}
         else
           mvn --batch-mode deploy

@@ -55,6 +55,7 @@ jobs:
           fi
         fi
 
+        echo "VERSION=${VERSION}"
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
                
         # Download the artifact
@@ -78,4 +79,4 @@ jobs:
       with:
         context: ./build
         push: true
-        tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.get-artifact.outputs.version }}
+        tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.get-artifact.outputs.VERSION }}
