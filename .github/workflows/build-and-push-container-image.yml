@@ -49,24 +49,25 @@ jobs:
       id: get-artifact
       run: |
         echo "Triggered by workflow_dispatch. Using provided inputs."
-        VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}"
-        DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"
+        VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}" # e.g., 0.3.0-SNAPSHOT
+        DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"                  # e.g., 0.3.0-pr-27
         
-        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-        # Construct the expected JAR name based on the docker_tag
-        EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"
+        ARTIFACT_ID="college-schedule"
 
-        echo "Version for download path: ${VERSION_FOR_DOWNLOAD_PATH}"
-        echo "Expected JAR name: ${EXPECTED_JAR_NAME}"
+        # Name of the JAR file as it's expected to be found in the local .m2 repo after download,
+        # based on your observation.
+        LOCAL_DOWNLOADED_JAR_FILENAME="${ARTIFACT_ID}-${VERSION_FOR_DOWNLOAD_PATH}.jar" # e.g., college-schedule-0.3.0-SNAPSHOT.jar
+
+        echo "Version for download path in repo: ${VERSION_FOR_DOWNLOAD_PATH}"
         echo "Docker tag to use: ${DOCKER_TAG_TO_USE}"
+        echo "Locally downloaded JAR filename expected in .m2: ${LOCAL_DOWNLOADED_JAR_FILENAME}"
         
-        echo "VERSION_FOR_DOWNLOAD_PATH=${VERSION_FOR_DOWNLOAD_PATH}" >> $GITHUB_OUTPUT
-        echo "EXPECTED_JAR_NAME=${EXPECTED_JAR_NAME}" >> $GITHUB_OUTPUT
+        # Output DOCKER_TAG for the build step.
         echo "DOCKER_TAG=${DOCKER_TAG_TO_USE}" >> $GITHUB_OUTPUT
                
         mvn dependency:get \
           -DgroupId=com.college \
-          -DartifactId=college-schedule \
+          -DartifactId=${ARTIFACT_ID} \
           -Dversion=${VERSION_FOR_DOWNLOAD_PATH} \
           -Dpackaging=jar \
           -Dclassifier= \
