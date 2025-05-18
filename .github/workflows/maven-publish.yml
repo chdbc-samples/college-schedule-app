@@ -86,3 +86,4 @@ jobs:
         workflow: build-and-push-container-image.yml
         token: ${{ secrets.GITHUB_TOKEN }}
         inputs: '{ "version_to_download": "${{ steps.publish.outputs.version_to_download }}", "docker_tag": "${{ steps.publish.outputs.docker_tag }}" }'
+        ref: ${{ github.sha }} # Explicitly set the ref to the commit SHA

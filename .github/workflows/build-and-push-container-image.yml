@@ -1,32 +1,28 @@
 name: Build and Push Container Image
 
 on:
-  workflow_run:
-    workflows: ["Maven Package"]
-    types:
-      - completed
-    branches:
-      - main
-      - '*'
   workflow_dispatch:
     inputs:
       version_to_download:
         description: 'Version of the artifact to download from GitHub Packages'
-        required: false
+        required: true
       docker_tag:
         description: 'Tag to use for the Docker image'
-        required: false
+        required: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
       packages: write
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        # When dispatched, github.ref is the ref that was passed to the dispatch call
+        ref: ${{ github.ref }}
 
     - name: Set up Java for accessing GitHub Packages
       uses: actions/setup-java@v3
@@ -49,60 +45,16 @@ jobs:
         mkdir -p ~/.m2
         echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers><profiles><profile><id>github</id><repositories><repository><id>github</id><url>https://maven.pkg.github.com/${{ github.repository }}</url><snapshots><enabled>true</enabled></snapshots></repository></repositories></profile></profiles><activeProfiles><activeProfile>github</activeProfile></activeProfiles></settings>" > ~/.m2/settings.xml
 
-    - name: Extract version and download artifact
+    - name: Use passed inputs and download artifact
       id: get-artifact
       run: |
-        # Determine versions based on trigger type
-        if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-          # Triggered by maven-publish completion
-          # We expect version_to_download and docker_tag to be passed from the triggering workflow
-          # However, workflow_run doesn't directly pass inputs like workflow_dispatch does.
-          # We need to rely on the fact that maven-publish has already set the correct version in the pom for PRs
-          # or uses the standard version for main branch.
-          
-          # For PRs, the maven-publish workflow modified the pom's finalName but deployed under the original SNAPSHOT version path.
-          # The actual JAR name will be like college-schedule-0.3.0-pr-23.jar
-          # The version in the repository path will be 0.3.0-SNAPSHOT
-
-          BASE_VERSION_POM=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-
-          if [[ "${{ github.event.workflow_run.head_branch }}" == "refs/pull/"* ]]; then
-            PR_NUMBER=$(echo "${{ github.event.workflow_run.head_branch }}" | awk -F "/" '{print $3}')
-            VERSION_NO_SNAPSHOT=$(echo ${BASE_VERSION_POM} | sed 's/-SNAPSHOT//g')
-            
-            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}" # e.g., 0.3.0-SNAPSHOT
-            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}.jar" # e.g., college-schedule-0.3.0-pr-23.jar
-            DOCKER_TAG_TO_USE="${VERSION_NO_SNAPSHOT}-pr-${PR_NUMBER}" # e.g., 0.3.0-pr-23
-          else
-            # Main branch or direct push
-            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}"
-            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${BASE_VERSION_POM}.jar"
-            DOCKER_TAG_TO_USE="${BASE_VERSION_POM}"
-          fi
-        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          # Manual trigger, use inputs if provided, otherwise evaluate from pom
-          if [[ -n "${{ github.event.inputs.version_to_download }}" && -n "${{ github.event.inputs.docker_tag }}" ]]; then
-            VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}"
-            DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"
-            # Infer EXPECTED_JAR_NAME based on docker_tag and artifactId
-            ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"
-            # If docker_tag is a SNAPSHOT, the jar name might not have -SNAPSHOT if finalName was used
-            # This part might need refinement if manual dispatch for PR-like artifacts is common
-            if [[ "${DOCKER_TAG_TO_USE}" == *"-SNAPSHOT"* ]]; then 
-                EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"; 
-            fi
-
-          else
-            # Fallback for manual dispatch if inputs are not provided (should ideally not happen if triggered from maven-publish)
-            BASE_VERSION_POM=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-            ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-            VERSION_FOR_DOWNLOAD_PATH="${BASE_VERSION_POM}"
-            EXPECTED_JAR_NAME="${ARTIFACT_ID}-${BASE_VERSION_POM}.jar"
-            DOCKER_TAG_TO_USE="${BASE_VERSION_POM}"
-          fi
-        fi
+        echo "Triggered by workflow_dispatch. Using provided inputs."
+        VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}"
+        DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"
+        
+        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        # Construct the expected JAR name based on the docker_tag
+        EXPECTED_JAR_NAME="${ARTIFACT_ID}-${DOCKER_TAG_TO_USE}.jar"
 
         echo "Version for download path: ${VERSION_FOR_DOWNLOAD_PATH}"
         echo "Expected JAR name: ${EXPECTED_JAR_NAME}"
@@ -112,9 +64,6 @@ jobs:
         echo "EXPECTED_JAR_NAME=${EXPECTED_JAR_NAME}" >> $GITHUB_OUTPUT
         echo "DOCKER_TAG=${DOCKER_TAG_TO_USE}" >> $GITHUB_OUTPUT
                
-        # Download the artifact
-        # The version in the path is VERSION_FOR_DOWNLOAD_PATH
-        # The artifact file itself will be EXPECTED_JAR_NAME
         mvn dependency:get \
           -DgroupId=com.college \
           -DartifactId=college-schedule \
@@ -123,14 +72,17 @@ jobs:
           -Dclassifier= \
           -DremoteRepositories=github::default::https://maven.pkg.github.com/${{ github.repository }}
         
-        # Copy to build directory, using the expected JAR name
-        # The local Maven repo path will use VERSION_FOR_DOWNLOAD_PATH
-        # The actual file name within that directory will be EXPECTED_JAR_NAME
-        mkdir -p build
-        cp ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME} ./build/app.jar
+        # Correct path to the downloaded artifact in the local .m2 repository
+        # The artifact is stored under its actual name (EXPECTED_JAR_NAME) 
+        # inside the directory named after its repository version (VERSION_FOR_DOWNLOAD_PATH)
+        LOCAL_M2_ARTIFACT_PATH="~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME}"
+        echo "Attempting to copy from: ${LOCAL_M2_ARTIFACT_PATH}"
+        cp "${LOCAL_M2_ARTIFACT_PATH}" ./build/app.jar
         
         if [ ! -f "./build/app.jar" ]; then
-          echo "Failed to download or copy artifact. Looked for ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${EXPECTED_JAR_NAME}"
+          echo "Failed to download or copy artifact. Looked for ${LOCAL_M2_ARTIFACT_PATH}"
+          echo "Listing contents of ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
+          ls -la ~/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/
           exit 1
         fi
 
