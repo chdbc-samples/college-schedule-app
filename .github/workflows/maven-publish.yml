@@ -8,7 +8,8 @@ name: Maven Package
 # Запускається при пушах в гілку main або при створенні pull request
 on:
   push:
-    branches: ['*']
+    branches:
+      - main
 
   pull_request:
     branches: ['*']
