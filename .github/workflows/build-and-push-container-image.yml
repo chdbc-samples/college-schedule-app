@@ -7,9 +7,7 @@ on:
       - completed
     branches:
       - main
-
-  pull_request:
-    branches: ['*']
+      - '*'
 
   workflow_dispatch:
     inputs:
@@ -65,19 +63,45 @@ jobs:
             else             
               echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
             fi
-          fi
-
-      - name: Download JAR from GitHub Packages
+          fi      - name: Download JAR from GitHub Packages
         run: |
-          # Create Maven settings with GitHub authentication
+          # Create Maven settings with GitHub authentication and repository configuration
           mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${{ github.actor }}</username><password>${{ secrets.GITHUB_TOKEN }}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${{ github.actor }}</username>
+                <password>${{ secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+            <profiles>
+              <profile>
+                <id>github</id>
+                <repositories>
+                  <repository>
+                    <id>github</id>
+                    <url>https://maven.pkg.github.com/${{ github.repository }}</url>
+                    <snapshots>
+                      <enabled>true</enabled>
+                    </snapshots>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>github</activeProfile>
+            </activeProfiles>
+          </settings>" > ~/.m2/settings.xml
           
           # Download the artifact from GitHub Packages
-          mvn dependency:copy -Dartifact=com.college:college-schedule:${VERSION}:jar -DoutputDirectory=./build
+          mvn dependency:copy \
+            -Dartifact=com.college:college-schedule:${{ steps.version.outputs.VERSION }} \
+            -DoutputDirectory=./build \
+            -B
 
           # Copy the JAR to the right location for Docker build
-          cp ./build/college-schedule-${VERSION}.jar ./build/app.jar
+          cp ./build/college-schedule-${{ steps.version.outputs.VERSION }}.jar ./build/app.jar
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
