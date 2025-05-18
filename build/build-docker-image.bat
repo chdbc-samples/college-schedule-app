@@ -6,7 +6,15 @@ REM Usage: build-docker-image.bat [version] [repository]
 
 REM Set default values if not provided
 set VERSION=%1
-if "%VERSION%"=="" set VERSION=0.2.0-SNAPSHOT
+if "%VERSION%"=="" (
+    for /f "usebackq delims=" %%a in (`mvn help:evaluate -Dexpression^=project.version -q -DforceStdout -f ..\pom.xml`) do (
+        set "VERSION=%%a"
+    )
+    if "!VERSION!"=="" (
+        echo Error: Could not get version from Maven
+        exit /b 1
+    )
+)
 
 set GITHUB_REPOSITORY=%2
 if "%GITHUB_REPOSITORY%"=="" (

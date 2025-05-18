@@ -34,7 +34,7 @@ jobs:
           github.event_name == 'workflow_run' && 
           github.event.workflow_run.conclusion != 'success'
         run: |
-          echo "This workflow is triggered by maven-publish workflow which failed"
+          echo "This workflow needs maven-publish workflow to be successful before it can proceed."
           exit 1
 
       - name: Checkout code
@@ -63,7 +63,9 @@ jobs:
             else             
               echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
             fi
-          fi      - name: Download JAR from GitHub Packages
+          fi
+
+      - name: Download JAR from GitHub Packages
         run: |
           # Create Maven settings with GitHub authentication and repository configuration
           mkdir -p ~/.m2
@@ -96,12 +98,12 @@ jobs:
           
           # Download the artifact from GitHub Packages
           mvn dependency:copy \
-            -Dartifact=com.college:college-schedule:${{ steps.version.outputs.VERSION }} \
+            -Dartifact=com.college:college-schedule:${VERSION} \
             -DoutputDirectory=./build \
             -B
 
           # Copy the JAR to the right location for Docker build
-          cp ./build/college-schedule-${{ steps.version.outputs.VERSION }}.jar ./build/app.jar
+          cp ./build/college-schedule-${VERSION}.jar ./build/app.jar
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
