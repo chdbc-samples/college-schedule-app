@@ -1,7 +1,10 @@
 name: Build and Push Container Image
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Maven Package"]
+    types:
+      - completed
     branches:
       - main
 
@@ -17,12 +20,25 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Only run if the maven-publish workflow was successful or if it's a different trigger
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
 
     permissions:
       contents: read
       packages: write
 
     steps:
+      # Only run if the maven-publish workflow was successful
+      - name: Check workflow status
+        if: >-
+          github.event_name == 'workflow_run' && 
+          github.event.workflow_run.conclusion != 'success'
+        run: |
+          echo "This workflow is triggered by maven-publish workflow which failed"
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@v3
 
