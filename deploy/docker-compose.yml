@@ -8,13 +8,13 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATA_MONGODB_HOST=mongodb
-      - SPRING_DATA_MONGODB_PORT=27017
-      - SPRING_DATA_MONGODB_DATABASE=college
-      - SPRING_DATA_MONGODB_USERNAME=root
-      - SPRING_DATA_MONGODB_PASSWORD=example
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/college-db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
-      - mongodb
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -24,38 +24,29 @@ services:
     networks:
       - college-network
 
-  mongodb:
-    image: mongo:5.0
-    container_name: mongodb
+  db:
+    image: postgres:15
+    container_name: postgres
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-      MONGO_INITDB_DATABASE: college
+      POSTGRES_DB: college-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
-      - mongodb-data:/data/db
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     networks:
       - college-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/college --quiet
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
-  mongodb-data:
+  postgres-data:
 
 networks:
   college-network:
     driver: bridge
-
-  mongodb:
-    image: mongo:5.0
-    container_name: mongodb
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
