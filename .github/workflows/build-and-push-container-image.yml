@@ -139,4 +139,4 @@ jobs:
       with:
         context: ./build
         push: true
-        tags: ghcr.io/${{ github.repository }}/college-schedule-app:${{ steps.get-artifact.outputs.DOCKER_TAG }}
+        tags: ghcr.io/${{ github.repository }}:${{ steps.get-artifact.outputs.DOCKER_TAG }}
