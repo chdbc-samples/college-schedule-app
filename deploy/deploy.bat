@@ -5,11 +5,10 @@ REM Script to run the college-schedule-app with Docker Compose
 REM Usage: deploy.bat [version]
 
 REM Set default version if not provided
-set VERSION=%1
 if "%VERSION%"=="" set VERSION=latest
 
 REM Set default repository if not provided
-if "%GITHUB_REPOSITORY%"=="" set GITHUB_REPOSITORY=your-username/college-schedule-app
+if "%GITHUB_REPOSITORY%"=="" set GITHUB_REPOSITORY=
 
 REM Set environment variables for docker-compose
 set VERSION=%VERSION%
