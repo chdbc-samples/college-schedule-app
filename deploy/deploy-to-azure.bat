@@ -1,46 +1,55 @@
 @echo off
 setlocal
 
-REM Скрипт для розгортання college-schedule-app в Azure App Service.
-REM Використання: deploy-to-azure.bat [version] [github_owner] [app_service_name] [resource_group]
+REM Встановлення значень за замовчуванням, якщо не надано
+if "%VERSION%"=="" set "VERSION=0.3.0-SNAPSHOT"
+if "%GITHUB_OWNER%"=="" set GITHUB_OWNER=chdbc-samples
+if "%APP_SERVICE_NAME%"=="" set "APP_SERVICE_NAME=college-schedule-app"
+if "%APP_SERVICE_PLAN%"=="" set "APP_SERVICE_PLAN=college-schedule-plan"
+if "%RESOURCE_GROUP%"=="" set "RESOURCE_GROUP=college-schedule-rg"
+if "%IMAGE_NAME%"=="" set "IMAGE_NAME=college-schedule-app"
+
+REM Перевірка наявності Azure CLI
+where az >nul 2>&1
+
+REM Скрипт для розгортання <APP_SERVICE_NAME> в Azure App Service.
 REM
 REM Перед запуском:
 REM 1. Встановіть Azure CLI: https://aka.ms/azure-cli-download
 REM 2. Увійдіть в Azure: az login
 REM 3. Переконайтеся, що Azure App Service створено та налаштовано для отримання образів з GHCR.
 REM    (одноразове налаштування для App Service):
-REM    az webapp config container set --name <APP_SERVICE_NAME> --resource-group <RESOURCE_GROUP> ^
-REM      --docker-registry-server-url https://ghcr.io ^
-REM      --docker-registry-server-user <YOUR_GITHUB_USERNAME> ^
-REM      --docker-registry-server-password <YOUR_GITHUB_PAT_WITH_READ_PACKAGES_SCOPE>
+REM
+REM    az provider register --namespace Microsoft.Web
+REM
+REM   дочекайтесь створення підписки (можливо, це займе кілька хвилин):
+REM    az provider show --namespace Microsoft.Web --query "registrationState"
+REM    
+REM    має повернути "Registered" коли все готово.
+REM
+REM    az appservice plan create `
+REM      --name "<APP_SERVICE_PLAN>" `
+REM      --resource-group "<RESOURCE_GROUP>" `
+REM      --sku B1 `
+REM      --is-linux
 
-REM Встановлення параметрів
-set "CLI_VERSION=%~1"
-set "CLI_GITHUB_OWNER=%~2"
-set "CLI_APP_SERVICE_NAME=%~3"
-set "CLI_RESOURCE_GROUP=%~4"
+REM    az group create `
+REM      --name "college-schedule-rg" `
+REM      --location "westeurope"
+REM
+REM az webapp create `
+REM  --name "<APP_SERVICE_PLAN>" `
+REM  --plan "<APP_SERVICE_PLAN>" `
+REM  --resource-group "college-schedule-rg" `
+REM  --container-registry-url "https://ghcr.io" `
+REM  --container-image-name "ghcr.io/<GITHUB_OWNER>/<IMAGE_NAME>:<VERSION>" `
+REM  --container-registry-user "<YOUR_GITHUB_USERNAME>" `
+REM  --container-registry-password "<YOUR_GITHUB_PAT_WITH_READ_PACKAGES_SCOPE>"
 
-REM Встановлення значень за замовчуванням, якщо не надано
-set "VERSION=%CLI_VERSION%"
-if "%VERSION%"=="" set "VERSION=latest"
 
-set "GITHUB_OWNER=%CLI_GITHUB_OWNER%"
-if "%GITHUB_OWNER%"=="" (
-    echo Помилка: Власника GitHub (GITHUB_OWNER) не вказано.
-    echo Використання: deploy-to-azure.bat [version] [github_owner] [app_service_name] [resource_group]
-    goto :eof
-)
-
-set "APP_SERVICE_NAME=%CLI_APP_SERVICE_NAME%"
-if "%APP_SERVICE_NAME%"=="" set "APP_SERVICE_NAME=college-schedule-app"
-
-set "RESOURCE_GROUP=%CLI_RESOURCE_GROUP%"
-if "%RESOURCE_GROUP%"=="" set "RESOURCE_GROUP=college-schedule-rg"
-
-set "IMAGE_NAME=college-schedule-app"
 set "DOCKER_IMAGE_TAG=ghcr.io/%GITHUB_OWNER%/%IMAGE_NAME%:%VERSION%"
 
-echo Розгортання college-schedule-app версії: %VERSION%
+echo Розгортання %APP_SERVICE_NAME% версії: %VERSION%
 echo Власник образу GitHub: %GITHUB_OWNER%
 echo App Service: %APP_SERVICE_NAME%
 echo Група ресурсів: %RESOURCE_GROUP%
