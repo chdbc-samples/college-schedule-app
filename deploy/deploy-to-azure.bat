@@ -20,12 +20,7 @@ REM 2. Увійдіть в Azure: az login
 REM 3. Переконайтеся, що Azure App Service створено та налаштовано для отримання образів з GHCR.
 REM    (одноразове налаштування для App Service):
 REM
-REM    az provider register --namespace Microsoft.Web
-REM
-REM   дочекайтесь створення підписки (можливо, це займе кілька хвилин):
-REM    az provider show --namespace Microsoft.Web --query "registrationState"
-REM    
-REM    має повернути "Registered" коли все готово.
+REM    az provider register --namespace Microsoft.Web --wait
 REM
 REM    az appservice plan create `
 REM      --name "<APP_SERVICE_PLAN>" `
@@ -45,6 +40,27 @@ REM  --container-registry-url "https://ghcr.io" `
 REM  --container-image-name "ghcr.io/<GITHUB_OWNER>/<IMAGE_NAME>:<VERSION>" `
 REM  --container-registry-user "<YOUR_GITHUB_USERNAME>" `
 REM  --container-registry-password "<YOUR_GITHUB_PAT_WITH_READ_PACKAGES_SCOPE>"
+
+REM az provider register --namespace Microsoft.ContainerInstance --wait
+
+REM az provider register -n Microsoft.OperationalInsights --wait
+
+
+REM az provider register --namespace Microsoft.DBforPostgreSQL --wait
+
+
+
+REM az postgres flexible-server create `
+REM     --resource-group "college-schedule-rg" `
+REM     --name "college-schedule-postgres-server" `
+REM     --admin-user "postgres" `
+REM     --admin-password "postgres" `
+REM     --sku-name Standard_B1ms `
+REM     --tier Burstable `
+REM     --version 14 `
+REM     --storage-size 32 `
+REM     --location "westeurope" `
+REM     --public-access 0.0.0.0
 
 
 set "DOCKER_IMAGE_TAG=ghcr.io/%GITHUB_OWNER%/%IMAGE_NAME%:%VERSION%"
