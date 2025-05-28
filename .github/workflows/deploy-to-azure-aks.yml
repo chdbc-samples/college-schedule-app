@@ -65,7 +65,7 @@ jobs:
       - name: Розгортання PostgreSQL
         run: |
           echo "Deploying PostgreSQL..."
-          kubectl apply -f deploy/k8s-manifests/postgres-deployment.yaml
+          kubectl apply -f deploy/k8s-manifests/postgres-deployment.yml
           
           # Чекаємо, поки PostgreSQL буде готовий
           echo "Waiting for PostgreSQL to be ready..."
