@@ -1,20 +1,18 @@
-name: Deploy to Azure App Service
+name: Deploy to Azure AKS
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version of the app to deploy'
+        description: 'Application version to deploy'
         required: true
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - development
-          - staging
-          - production
+        default: 'latest'
+
+env:
+  AZURE_RESOURCE_GROUP: college-schedule-rg
+  AKS_CLUSTER_NAME: college-schedule-aks
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_NAME: college-schedule-app
 
 jobs:
   deploy:
@@ -23,38 +21,94 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Log in to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: college-schedule-app # Замініть на назву вашого App Service
-          resource-group-name: college-schedule-rg # Замініть на назву вашої групи ресурсів
-          images: 'ghcr.io/${{ github.repository_owner }}/college-schedule-app:${{ github.event.inputs.version }}'
-          configuration: |
-            [
-              {"name": "SPRING_DATASOURCE_URL", "value": "${{ secrets.SPRING_DATASOURCE_URL }}", "slotSetting": false},
-              {"name": "SPRING_DATASOURCE_USERNAME", "value": "${{ secrets.POSTGRESQL_USERNAME }}", "slotSetting": false},
-              {"name": "SPRING_DATASOURCE_PASSWORD", "value": "${{ secrets.POSTGRESQL_PASSWORD }}", "slotSetting": false},
-              {"name": "LOGGING_LEVEL_COM_COLLEGE", "value": "${{ secrets.LOGGING_LEVEL_COM_COLLEGE || 'INFO' }}", "slotSetting": false},
-              {"name": "SERVER_PORT", "value": "8080", "slotSetting": false}
-            ]
-
-      - name: Deployment verification
+      - name: Replace image tags in Kubernetes manifests
         run: |
-          echo "Deployment completed successfully!"
-          echo "App URL: https://$(az webapp show --name college-schedule-app --resource-group college-schedule-rg --query defaultHostName -o tsv)"
+          # Замінюємо тег образу в deployment файлах
+          sed -i "s|{{IMAGE_TAG}}|${{ github.event.inputs.version }}|g" k8s/app-deployment.yml
+          sed -i "s|{{GITHUB_OWNER}}|${{ github.repository_owner }}|g" deploy/k8s/app-deployment.yml
+
+      - name: Deploy PostgreSQL
+        run: |
+          echo "Deploying PostgreSQL..."
+          kubectl apply -f deploy/k8s/postgres-deployment.yml
           
- 
+          # Чекаємо, поки PostgreSQL буде готовий
+          kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
+
+      - name: Deploy Application
+        run: |
+          echo "Deploying application..."
+          kubectl apply -f deploy/k8s/app-deployment.yml
+
+          # Чекаємо, поки застосунок буде готовий
+          kubectl wait --for=condition=ready pod -l app=college-schedule-app --timeout=300s
+
+      - name: Get service information
+        run: |
+          echo "Getting service information..."
+          kubectl get services
+          kubectl get pods
+          
+          # Отримуємо зовнішній IP
+          EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -n "$EXTERNAL_IP" ]; then
+            echo "Application URL: http://$EXTERNAL_IP"
+          else
+            echo "Waiting for external IP to be assigned..."
+          fi
+
+      - name: Health check
+        run: |
+          echo "Performing health check..."
+          # Чекаємо, поки з'явиться зовнішній IP
+          for i in {1..30}; do
+            EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            if [ -n "$EXTERNAL_IP" ]; then
+              echo "External IP found: $EXTERNAL_IP"
+              break
+            fi
+            echo "Waiting for external IP... (attempt $i/30)"
+            sleep 10
+          done
+          
+          # Перевіряємо здоров'я застосунку
+          if [ -n "$EXTERNAL_IP" ]; then
+            curl --fail --silent --show-error --max-time 30 "http://$EXTERNAL_IP/actuator/health" || echo "Health check endpoint not available yet"
+          fi
+
+      - name: Show deployment status
+        if: always()
+        run: |
+          echo "=== Deployment Summary ==="
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Version: ${{ github.event.inputs.version }}"
+          echo ""
+          echo "Pods:"
+          kubectl get pods
+          echo ""
+          echo "Services:"
+          kubectl get services
+          echo ""
+          echo "Deployments:"
+          kubectl get deployments
