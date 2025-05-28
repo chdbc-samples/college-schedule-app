@@ -1,0 +1,187 @@
+name: Deploy to Azure AKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версія програми для розгортання'
+        required: true
+        default: '0.3.0-SNAPSHOT'
+        type: string
+
+env:
+  AZURE_RESOURCE_GROUP: college-schedule-rg
+  AKS_CLUSTER_NAME: college-schedule-aks
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_NAME: college-schedule-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Отримання коду
+        uses: actions/checkout@v4
+        
+      - name: Вхід в Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Отримання облікових даних AKS
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Створення або оновлення секрету для GHCR
+        run: |
+          echo "Creating/updating GHCR pull secret..."
+          
+          # Видаляємо існуючий secret якщо є
+          kubectl delete secret ghcr-secret --ignore-not-found=true
+          
+          # Створюємо новий secret для GHCR
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=${{ env.CONTAINER_REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }}
+          
+          echo "✅ GHCR pull secret created successfully"
+
+      - name: Заміна тегів образів у маніфестах Kubernetes
+        run: |
+          echo "Replacing image tags in manifests..."
+          
+          # Замінюємо тег образу в deployment файлах
+          sed -i "s|{{IMAGE_TAG}}|${{ github.event.inputs.version }}|g" deploy/k8s-manifests/app-deployment.yml
+          sed -i "s|{{GITHUB_OWNER}}|${{ github.repository_owner }}|g" deploy/k8s-manifests/app-deployment.yml
+
+          # Показуємо що замінили
+          echo "Final image reference:"
+          grep "image:" deploy/k8s-manifests/app-deployment.yml
+
+      - name: Розгортання PostgreSQL
+        run: |
+          echo "Deploying PostgreSQL..."
+          kubectl apply -f deploy/k8s-manifests/postgres-deployment.yaml
+          
+          # Чекаємо, поки PostgreSQL буде готовий
+          echo "Waiting for PostgreSQL to be ready..."
+          kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
+          
+          echo "✅ PostgreSQL is ready"
+
+      - name: Розгортання додатка
+        run: |
+          echo "Deploying application..."
+          
+          # Видаляємо старе розгортання
+          kubectl delete deployment college-schedule-app --ignore-not-found=true
+          
+          # Чекаємо поки поди зникнуть
+          kubectl wait --for=delete pod -l app=college-schedule-app --timeout=120s || true
+          
+          # Застосовуємо нове розгортання
+          kubectl apply -f deploy/k8s-manifests/app-deployment.yml
+
+          # Чекаємо, поки програма буде готова
+          echo "Waiting for application to be ready..."
+          kubectl wait --for=condition=ready pod -l app=college-schedule-app --timeout=600s
+          
+          echo "✅ Application is ready"
+
+      - name: Отримання інформації про сервіси
+        run: |
+          echo "Getting service information..."
+          echo ""
+          echo "=== Поди ==="
+          kubectl get pods -o wide
+          echo ""
+          echo "=== Сервіси ==="
+          kubectl get services
+          echo ""
+          echo "=== Розгортання ==="
+          kubectl get deployments
+          
+          # Отримуємо зовнішній IP
+          EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+            echo ""
+            echo "🌐 URL програми: http://$EXTERNAL_IP"
+          else
+            echo ""
+            echo "⏳ External IP not assigned yet, will check in health check step..."
+          fi
+
+      - name: Перевірка здоров'я програми
+        run: |
+          echo "Перевірка здоров'я програми..."
+          
+          # Чекаємо, поки з'явиться зовнішній IP
+          for i in {1..30}; do
+            EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+              echo "✅ Зовнішній IP знайдено: $EXTERNAL_IP"
+              echo "🌐 URL програми: http://$EXTERNAL_IP"
+              
+              # Перевіряємо доступність програми
+              echo "Тестування з'єднання з програмою..."
+              if curl --fail --silent --show-error --max-time 30 "http://$EXTERNAL_IP/" > /dev/null 2>&1; then
+                echo "✅ Програма відповідає!"
+              else
+                echo "⚠️  Програма ще не відповідає, але розгортання завершено"
+              fi
+              break
+            fi
+            echo "Очікування зовнішнього IP... (спроба $i/30)"
+            sleep 10
+          done
+          
+          if [ -z "$EXTERNAL_IP" ] || [ "$EXTERNAL_IP" == "null" ]; then
+            echo "⚠️  Зовнішній IP не призначено після 5 хвилин"
+            echo "Можна перевірити пізніше командою: kubectl get service college-schedule-app"
+          fi
+
+      - name: Відображення статусу розгортання
+        if: always()
+        run: |
+          echo ""
+          echo "=== Підсумок розгортання ==="
+          echo "Версія: ${{ github.event.inputs.version }}"
+          echo "Образ: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}"
+          echo ""
+          echo "=== Статус подів ==="
+          kubectl get pods -l app=college-schedule-app -o wide
+          echo ""
+          echo "=== Логи подів (останні 10 рядків) ==="
+          kubectl logs -l app=college-schedule-app --tail=10 || echo "Логи ще недоступні"
+          echo ""
+          echo "=== Статус сервісу ==="
+          kubectl get service college-schedule-app
+          echo ""
+          echo "=== Статус розгортання ==="
+          kubectl get deployment college-schedule-app
+          echo ""
+          
+          # Показуємо події якщо є проблеми
+          if ! kubectl get pods -l app=college-schedule-app --no-headers | grep -q "Running"; then
+            echo "=== Останні події ==="
+            kubectl get events --sort-by=.metadata.creationTimestamp --field-selector involvedObject.kind=Pod | tail -10
+          fi
+
+      - name: Усунення неполадок розгортання
+        if: failure()
+        run: |
+          echo ""
+          echo "=== Інформація для усунення неполадок ==="
+          echo ""
+          echo "=== Деталі подів ==="
+          kubectl describe pods -l app=college-schedule-app
+          echo ""
+          echo "=== Останні події ==="
+          kubectl get events --sort-by=.metadata.creationTimestamp | tail -20
+          echo ""
+          echo "=== Статус розгортання ==="
+          kubectl describe deployment college-schedule-app
