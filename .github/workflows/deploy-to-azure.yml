@@ -6,7 +6,7 @@ on:
       version:
         description: 'Application version to deploy'
         required: true
-        default: 'latest'
+        default: '0.3.0-SNAPSHOT'
 
 env:
   AZURE_RESOURCE_GROUP: college-schedule-rg
@@ -17,7 +17,6 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
     
     steps:
       - name: Checkout code
@@ -35,80 +34,153 @@ jobs:
             --name ${{ env.AKS_CLUSTER_NAME }} \
             --overwrite-existing
 
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.CONTAINER_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create or update GHCR pull secret
+        run: |
+          echo "Creating/updating GHCR pull secret..."
+          
+          # Видаляємо існуючий secret якщо є
+          kubectl delete secret ghcr-secret --ignore-not-found=true
+          
+          # Створюємо новий secret для GHCR
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=${{ env.CONTAINER_REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }}
+          
+          echo "✅ GHCR pull secret created successfully"
 
       - name: Replace image tags in Kubernetes manifests
         run: |
+          echo "Replacing image tags in manifests..."
+          
           # Замінюємо тег образу в deployment файлах
-          sed -i "s|{{IMAGE_TAG}}|${{ github.event.inputs.version }}|g" k8s/app-deployment.yml
+          sed -i "s|{{IMAGE_TAG}}|${{ github.event.inputs.version }}|g" deploy/k8s/app-deployment.yml
           sed -i "s|{{GITHUB_OWNER}}|${{ github.repository_owner }}|g" deploy/k8s/app-deployment.yml
+          
+          # Показуємо що замінили
+          echo "Final image reference:"
+          grep "image:" deploy/k8s/app-deployment.yml
 
       - name: Deploy PostgreSQL
         run: |
           echo "Deploying PostgreSQL..."
-          kubectl apply -f deploy/k8s/postgres-deployment.yml
+          kubectl apply -f deploy/k8s/postgres-deployment.yaml
           
           # Чекаємо, поки PostgreSQL буде готовий
+          echo "Waiting for PostgreSQL to be ready..."
           kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
+          
+          echo "✅ PostgreSQL is ready"
 
       - name: Deploy Application
         run: |
           echo "Deploying application..."
+          
+          # Видаляємо старий deployment
+          kubectl delete deployment college-schedule-app --ignore-not-found=true
+          
+          # Чекаємо поки поди зникнуть
+          kubectl wait --for=delete pod -l app=college-schedule-app --timeout=120s || true
+          
+          # Застосовуємо новий deployment
           kubectl apply -f deploy/k8s/app-deployment.yml
 
           # Чекаємо, поки застосунок буде готовий
-          kubectl wait --for=condition=ready pod -l app=college-schedule-app --timeout=300s
+          echo "Waiting for application to be ready..."
+          kubectl wait --for=condition=ready pod -l app=college-schedule-app --timeout=600s
+          
+          echo "✅ Application is ready"
 
       - name: Get service information
         run: |
           echo "Getting service information..."
+          echo ""
+          echo "=== Pods ==="
+          kubectl get pods -o wide
+          echo ""
+          echo "=== Services ==="
           kubectl get services
-          kubectl get pods
+          echo ""
+          echo "=== Deployments ==="
+          kubectl get deployments
           
           # Отримуємо зовнішній IP
-          EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          if [ -n "$EXTERNAL_IP" ]; then
-            echo "Application URL: http://$EXTERNAL_IP"
+          EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+            echo ""
+            echo "🌐 Application URL: http://$EXTERNAL_IP"
           else
-            echo "Waiting for external IP to be assigned..."
+            echo ""
+            echo "⏳ External IP not assigned yet, will check in health check step..."
           fi
 
       - name: Health check
         run: |
           echo "Performing health check..."
+          
           # Чекаємо, поки з'явиться зовнішній IP
           for i in {1..30}; do
-            EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
-            if [ -n "$EXTERNAL_IP" ]; then
-              echo "External IP found: $EXTERNAL_IP"
+            EXTERNAL_IP=$(kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+              echo "✅ External IP found: $EXTERNAL_IP"
+              echo "🌐 Application URL: http://$EXTERNAL_IP"
+              
+              # Перевіряємо доступність застосунку
+              echo "Testing application connectivity..."
+              if curl --fail --silent --show-error --max-time 30 "http://$EXTERNAL_IP/" > /dev/null 2>&1; then
+                echo "✅ Application is responding!"
+              else
+                echo "⚠️  Application not responding yet, but deployment is complete"
+              fi
               break
             fi
             echo "Waiting for external IP... (attempt $i/30)"
             sleep 10
           done
           
-          # Перевіряємо здоров'я застосунку
-          if [ -n "$EXTERNAL_IP" ]; then
-            curl --fail --silent --show-error --max-time 30 "http://$EXTERNAL_IP/actuator/health" || echo "Health check endpoint not available yet"
+          if [ -z "$EXTERNAL_IP" ] || [ "$EXTERNAL_IP" == "null" ]; then
+            echo "⚠️  External IP not assigned after 5 minutes"
+            echo "You can check later with: kubectl get service college-schedule-app"
           fi
 
       - name: Show deployment status
         if: always()
         run: |
-          echo "=== Deployment Summary ==="
-          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo ""
+          echo "=== Final Deployment Summary ==="
           echo "Version: ${{ github.event.inputs.version }}"
+          echo "Image: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}"
           echo ""
-          echo "Pods:"
-          kubectl get pods
+          echo "=== Pods Status ==="
+          kubectl get pods -l app=college-schedule-app -o wide
           echo ""
-          echo "Services:"
-          kubectl get services
+          echo "=== Pod Logs (last 10 lines) ==="
+          kubectl logs -l app=college-schedule-app --tail=10 || echo "No logs available yet"
           echo ""
-          echo "Deployments:"
-          kubectl get deployments
+          echo "=== Service Status ==="
+          kubectl get service college-schedule-app
+          echo ""
+          echo "=== Deployment Status ==="
+          kubectl get deployment college-schedule-app
+          echo ""
+          
+          # Показуємо events якщо є проблеми
+          if ! kubectl get pods -l app=college-schedule-app --no-headers | grep -q "Running"; then
+            echo "=== Recent Events ==="
+            kubectl get events --sort-by=.metadata.creationTimestamp --field-selector involvedObject.kind=Pod | tail -10
+          fi
+
+      - name: Deployment troubleshooting
+        if: failure()
+        run: |
+          echo ""
+          echo "=== Troubleshooting Information ==="
+          echo ""
+          echo "=== Pod Details ==="
+          kubectl describe pods -l app=college-schedule-app
+          echo ""
+          echo "=== Recent Events ==="
+          kubectl get events --sort-by=.metadata.creationTimestamp | tail -20
+          echo ""
+          echo "=== Deployment Status ==="
+          kubectl describe deployment college-schedule-app
