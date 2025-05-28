@@ -16,7 +16,6 @@
 4. Зберіть проект за допомогою команди: `mvn clean install`.
 5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="postgres" exec:java -D"exec.mainClass=com.college.MainApp"`.
 6. Відкрийте web-interface в браузері за адресою localhost
-```
 
 ## Публікація артефактів
 
