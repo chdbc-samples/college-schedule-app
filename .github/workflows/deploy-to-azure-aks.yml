@@ -62,6 +62,10 @@ jobs:
           echo "Final image reference:"
           grep "image:" deploy/k8s-manifests/app-deployment.yml
 
+          # Показуємо весь файл для перевірки
+          echo "Final deployment manifest:" 
+          cat deploy/k8s-manifests/app-deployment.yml
+
       - name: Розгортання PostgreSQL
         run: |
           echo "Deploying PostgreSQL..."

@@ -18,7 +18,7 @@ spec:
       - name: ghcr-secret
       containers:
       - name: app
-        image: ghcr.io/chdbc-samples/college-schedule-app:0.3.0-SNAPSHOT
+        image: ghcr.io/{{GITHUB_OWNER}}/college-schedule-app:{{IMAGE_TAG}}
         imagePullPolicy: Always  # Завжди завантажувати образ
         ports:
         - containerPort: 8080
