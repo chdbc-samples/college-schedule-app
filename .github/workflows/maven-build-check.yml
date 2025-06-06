@@ -46,7 +46,7 @@ jobs:
         distribution: 'temurin'
         cache: maven
      
-    - name: Запуск модульних і модульних тестів
+    - name: Запуск модульних і інтеграційних тестів
       run: mvn clean test
       env:
         SPRING_PROFILES_ACTIVE: test
