@@ -52,11 +52,11 @@ jobs:
         VERSION_FOR_DOWNLOAD_PATH="${{ github.event.inputs.version_to_download }}" # e.g., 0.3.0-SNAPSHOT
         DOCKER_TAG_TO_USE="${{ github.event.inputs.docker_tag }}"                  # e.g., 0.3.0-pr-27
         
-        ARTIFACT_ID="college-schedule"
+        ARTIFACT_ID="car-schedule"
 
         # Name of the JAR file as it's expected to be found in the local .m2 repo after download,
         # based on your observation.
-        LOCAL_DOWNLOADED_JAR_FILENAME="${ARTIFACT_ID}-${VERSION_FOR_DOWNLOAD_PATH}.jar" # e.g., college-schedule-0.3.0-SNAPSHOT.jar
+        LOCAL_DOWNLOADED_JAR_FILENAME="${ARTIFACT_ID}-${VERSION_FOR_DOWNLOAD_PATH}.jar" # e.g., car-schedule-0.3.0-SNAPSHOT.jar
 
         echo "Version for download path in repo: ${VERSION_FOR_DOWNLOAD_PATH}"
         echo "Docker tag to use: ${DOCKER_TAG_TO_USE}"
@@ -66,7 +66,7 @@ jobs:
         echo "DOCKER_TAG=${DOCKER_TAG_TO_USE}" >> $GITHUB_OUTPUT
                
         mvn dependency:get \
-          -DgroupId=com.college \
+          -DgroupId=com.car \
           -DartifactId=${ARTIFACT_ID} \
           -Dversion=${VERSION_FOR_DOWNLOAD_PATH} \
           -Dpackaging=jar \
@@ -75,15 +75,15 @@ jobs:
         
         # Correct path to the downloaded artifact in the local .m2 repository
         # using the defined LOCAL_DOWNLOADED_JAR_FILENAME
-        LOCAL_M2_ARTIFACT_PATH="$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${LOCAL_DOWNLOADED_JAR_FILENAME}"
+        LOCAL_M2_ARTIFACT_PATH="$HOME/.m2/repository/com/car/car-schedule/${VERSION_FOR_DOWNLOAD_PATH}/${LOCAL_DOWNLOADED_JAR_FILENAME}"
         
         echo "Attempting to copy from: ${LOCAL_M2_ARTIFACT_PATH}"
         cp "${LOCAL_M2_ARTIFACT_PATH}" ./build/app.jar
         
         if [ ! -f "./build/app.jar" ]; then
           echo "Failed to download or copy artifact. Looked for ${LOCAL_M2_ARTIFACT_PATH}"
-          echo "Listing contents of $HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
-          ls -la "$HOME/.m2/repository/com/college/college-schedule/${VERSION_FOR_DOWNLOAD_PATH}/"
+          echo "Listing contents of $HOME/.m2/repository/com/car/car-schedule/${VERSION_FOR_DOWNLOAD_PATH}/ for debugging:"
+          ls -la "$HOME/.m2/repository/com/car/car-schedule/${VERSION_FOR_DOWNLOAD_PATH}/"
           exit 1
         fi
 
