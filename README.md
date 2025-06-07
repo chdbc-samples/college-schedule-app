@@ -29,7 +29,7 @@
 <dependencies>
     <dependency>
         <groupId>com.car</groupId>
-        <artifactId>car-schedule</artifactId>
+        <artifactId>car</artifactId>
         <version>0.2.0-SNAPSHOT</version>
     </dependency>
 </dependencies>
@@ -37,7 +37,7 @@
 <repositories>
     <repository>
         <id>github</id>
-        <url>https://maven.pkg.github.com/OWNER/car-schedule-app</url>
+        <url>https://maven.pkg.github.com/OWNER/car-app</url>
     </repository>
 </repositories>
 ```

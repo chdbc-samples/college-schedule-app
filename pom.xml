@@ -12,10 +12,10 @@
   
   <!-- Інформація про проект -->
   <groupId>com.car</groupId>
-  <artifactId>car-schedule</artifactId>
+  <artifactId>car</artifactId>
   <packaging>jar</packaging>
   <version>0.4.0-SNAPSHOT</version>
-  <name>car-schedule-app</name>
+  <name>car-app</name>
   
   <!-- Властивості проекту -->
   <properties>
@@ -25,9 +25,9 @@
 
   <!-- SCM Information -->
   <scm>
-    <connection>scm:git:https://github.com/chdbc-samples/car-schedule-app.git</connection>
-    <developerConnection>scm:git:https://github.com/chdbc-samples/car-schedule-app.git</developerConnection>
-    <url>https://github.com/chdbc-samples/car-schedule-app</url>
+    <connection>scm:git:https://github.com/chdbc-samples/car-app.git</connection>
+    <developerConnection>scm:git:https://github.com/chdbc-samples/car-app.git</developerConnection>
+    <url>https://github.com/chdbc-samples/car-app</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -83,7 +83,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/chdbc-samples/car-schedule-app</url>
+      <url>https://maven.pkg.github.com/chdbc-samples/car-app</url>
     </repository>
   </distributionManagement>
 

@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: car-schedule-app
+  name: car-app
   labels:
-    app: car-schedule-app
+    app: car-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: car-schedule-app
+      app: car-app
   template:
     metadata:
       labels:
-        app: car-schedule-app
+        app: car-app
     spec:
       imagePullSecrets:
       - name: ghcr-secret
       containers:
       - name: app
-        image: ghcr.io/{{GITHUB_OWNER}}/car-schedule-app:{{IMAGE_TAG}}
+        image: ghcr.io/{{GITHUB_OWNER}}/car-app:{{IMAGE_TAG}}
         imagePullPolicy: Always  # Завжди завантажувати образ
         ports:
         - containerPort: 8080
@@ -82,12 +82,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: car-schedule-app
+  name: car-app
   labels:
-    app: car-schedule-app
+    app: car-app
 spec:
   selector:
-    app: car-schedule-app
+    app: car-app
   ports:
   - port: 80
     targetPort: 8080

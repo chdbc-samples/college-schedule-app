@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   app:
-    image: ghcr.io/${GITHUB_OWNER}/car-schedule-app:${VERSION}
-    container_name: car-schedule-app
+    image: ghcr.io/${GITHUB_OWNER}/car-app:${VERSION}
+    container_name: car-app
     ports:
       - "8080:8080"
     depends_on:

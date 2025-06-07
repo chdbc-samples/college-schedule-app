@@ -154,7 +154,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: car-schedule-app  # Дозволити доступ тільки від застосунку
+          app: car-app  # Дозволити доступ тільки від застосунку
     ports:
     - protocol: TCP
       port: 5432
