@@ -11,10 +11,10 @@
 
 # Кроки для запуску програми і відкриття web-interface в Windows PowerShell
 1. Встановіть локально PostgreSQL, Maven та Java.
-2. Створіть базу даних college_db.
+2. Створіть базу даних library_db.
 3. Відкрийте PowerShell і виконайте неступну команду для відображення символів в UTF-8 кодуванні: `chcp 65001`.
 4. Зберіть проект за допомогою команди: `mvn clean install`.
-5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="postgres" exec:java -D"exec.mainClass=com.college.MainApp"`.
+5. Запустіть програму за допомогою команди: `mvn -DDB_PASSWORD="postgres" exec:java -D"exec.mainClass=com.library.MainApp"`.
 6. Відкрийте web-interface в браузері за адресою localhost
 
 ## Публікація артефактів
@@ -28,8 +28,8 @@
 ```xml
 <dependencies>
     <dependency>
-        <groupId>com.college</groupId>
-        <artifactId>college-schedule</artifactId>
+        <groupId>com.library</groupId>
+        <artifactId>library-schedule</artifactId>
         <version>0.2.0-SNAPSHOT</version>
     </dependency>
 </dependencies>
@@ -37,7 +37,7 @@
 <repositories>
     <repository>
         <id>github</id>
-        <url>https://maven.pkg.github.com/OWNER/college-schedule-app</url>
+        <url>https://maven.pkg.github.com/OWNER/library-schedule-app</url>
     </repository>
 </repositories>
 ```

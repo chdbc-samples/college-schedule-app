@@ -6,7 +6,7 @@
     <session-factory>
         <!-- Параметри підключення до бази даних -->
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/college_db</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/library_db</property>
         <property name="hibernate.connection.username">postgres</property>
         <property name="hibernate.connection.password">placeholder_password</property>
 
@@ -28,12 +28,12 @@
         <property name="hibernate.current_session_context_class">thread</property>
 
         <!-- Перелік анотованих класів-сутностей -->
-        <mapping class="com.college.entity.Department"/>
-        <mapping class="com.college.entity.Teacher"/>
-        <mapping class="com.college.entity.Student"/>
-        <mapping class="com.college.entity.Course"/>
-        <mapping class="com.college.entity.Room"/>
-        <mapping class="com.college.entity.ClassSchedule"/>
-        <mapping class="com.college.entity.Enrollment"/>
+        <mapping class="com.library.entity.Department"/>
+        <mapping class="com.library.entity.Teacher"/>
+        <mapping class="com.library.entity.Student"/>
+        <mapping class="com.library.entity.Course"/>
+        <mapping class="com.library.entity.Room"/>
+        <mapping class="com.library.entity.ClassSchedule"/>
+        <mapping class="com.library.entity.Enrollment"/>
     </session-factory>
 </hibernate-configuration>

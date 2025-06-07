@@ -1,13 +1,13 @@
-package com.college.controller;
+package com.library.controller;
 
-import com.college.MainApp;
-import com.college.entity.Course;
-import com.college.entity.Department;
-import com.college.entity.Enrollment;
-import com.college.entity.Room;
-import com.college.entity.Teacher;
-import com.college.entity.Student;
-import com.college.service.*;
+import com.library.MainApp;
+import com.library.entity.Course;
+import com.library.entity.Department;
+import com.library.entity.Enrollment;
+import com.library.entity.Room;
+import com.library.entity.Teacher;
+import com.library.entity.Student;
+import com.library.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

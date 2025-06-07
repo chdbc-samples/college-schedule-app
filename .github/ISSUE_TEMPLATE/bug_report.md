@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve the college schedule application
+about: Create a report to help us improve the library schedule application
 title: '[BUG] '
 labels: bug
 assignees: ''

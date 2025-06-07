@@ -3,7 +3,7 @@
 REM Встановлення значень за замовчуванням, якщо не надано
 if "%VERSION%"=="" set "VERSION=0.3.0-SNAPSHOT"
 if "%GITHUB_OWNER%"=="" set GITHUB_OWNER=chdbc-samples
-if "%RESOURCE_GROUP%"=="" set "RESOURCE_GROUP=college-schedule-rg"
+if "%RESOURCE_GROUP%"=="" set "RESOURCE_GROUP=library-schedule-rg"
 
 REM Перевірка наявності Azure CLI
 where az >nul 2>&1
@@ -19,7 +19,7 @@ REM
 REM    az provider register --namespace Microsoft.Web --wait
 REM
 REM    az group create `
-REM      --name "college-schedule-rg" `
+REM      --name "library-schedule-rg" `
 REM      --location "westeurope"
 
 REM az provider register --namespace microsoft.insights --wait
@@ -27,8 +27,8 @@ REM az provider register --namespace microsoft.insights --wait
 REM Створення AKS кластера...
 
 az aks create `
-  --resource-group college-schedule-rg `
-  --name college-schedule-aks `
+  --resource-group library-schedule-rg `
+  --name library-schedule-aks `
   --node-count 2 `
   --node-vm-size Standard_B2s `
   --location westus2 `
@@ -39,8 +39,8 @@ az aks create `
 
 REM Отримання облікових даних AKS...
 az aks get-credentials `
-    --resource-group college-schedule-rg `
-    --name college-schedule-aks
+    --resource-group library-schedule-rg `
+    --name library-schedule-aks
 
 REM Отримання subscription ID
 $subscriptionId = az account show --query id -o tsv
@@ -49,7 +49,7 @@ REM Створення Service Principal
 az ad sp create-for-rbac `
   --name "github-actions-aks" `
   --role "Azure Kubernetes Service Cluster User Role" `
-  --scopes "/subscriptions/$subscriptionId/resourceGroups/college-schedule-rg/providers/Microsoft.ContainerService/managedClusters/college-schedule-aks" `
+  --scopes "/subscriptions/$subscriptionId/resourceGroups/library-schedule-rg/providers/Microsoft.ContainerService/managedClusters/library-schedule-aks" `
   --sdk-auth
 
 REM Create a secret for GitHub Container Registry
@@ -69,16 +69,16 @@ REM Чекаємо поки pod з PostgreSQL стане готовим до р�
 kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
 
 REM Видаляємо попереднє розгортання додатку, якщо воно існує
-kubectl delete deployment college-schedule-app --ignore-not-found=true
+kubectl delete deployment library-schedule-app --ignore-not-found=true
 
 REM Чекаємо поки старі поди додатку повністю видаляться (таймаут 2 хвилини)
-kubectl wait --for=delete pod -l app=college-schedule-app --timeout=120s
+kubectl wait --for=delete pod -l app=library-schedule-app --timeout=120s
 
 REM Розгортаємо новий екземпляр додатку
 kubectl apply -f deploy/k8s-manifests/app-deployment.yml
 
 REM Чекаємо поки новий pod додатку стане готовим до роботи (таймаут 10 хвилин)
-kubectl wait --for=condition=ready pod -l app=college-schedule-app --timeout=600s
+kubectl wait --for=condition=ready pod -l app=library-schedule-app --timeout=600s
 
 REM Отримуємо зовнішню IP-адресу сервісу для доступу до додатку
-kubectl get service college-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl get service library-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}'

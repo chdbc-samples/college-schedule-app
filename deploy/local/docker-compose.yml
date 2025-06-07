@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   app:
-    image: ghcr.io/${GITHUB_OWNER}/college-schedule-app:${VERSION}
-    container_name: college-schedule-app
+    image: ghcr.io/${GITHUB_OWNER}/library-schedule-app:${VERSION}
+    container_name: library-schedule-app
     ports:
       - "8080:8080"
     depends_on:
       - db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/college-db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/library-db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SERVER_ADDRESS=0.0.0.0
@@ -22,7 +22,7 @@ services:
     image: postgres:15
     container_name: postgres
     environment:
-      POSTGRES_DB: college-db
+      POSTGRES_DB: library-db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:

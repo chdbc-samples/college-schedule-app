@@ -1,31 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: college-schedule-app
+  name: library-schedule-app
   labels:
-    app: college-schedule-app
+    app: library-schedule-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: college-schedule-app
+      app: library-schedule-app
   template:
     metadata:
       labels:
-        app: college-schedule-app
+        app: library-schedule-app
     spec:
       imagePullSecrets:
       - name: ghcr-secret
       containers:
       - name: app
-        image: ghcr.io/{{GITHUB_OWNER}}/college-schedule-app:{{IMAGE_TAG}}
+        image: ghcr.io/{{GITHUB_OWNER}}/library-schedule-app:{{IMAGE_TAG}}
         imagePullPolicy: Always  # Завжди завантажувати образ
         ports:
         - containerPort: 8080
           name: http
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://postgres:5432/college-db?sslmode=disable"
+          value: "jdbc:postgresql://postgres:5432/library-db?sslmode=disable"
         - name: SPRING_DATASOURCE_USERNAME
           value: "postgres"
         - name: SPRING_DATASOURCE_PASSWORD
@@ -82,12 +82,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: college-schedule-app
+  name: library-schedule-app
   labels:
-    app: college-schedule-app
+    app: library-schedule-app
 spec:
   selector:
-    app: college-schedule-app
+    app: library-schedule-app
   ports:
   - port: 80
     targetPort: 8080
