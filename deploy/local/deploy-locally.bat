@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-REM Script to run the college-schedule-app with Docker Compose
+REM Script to run the car-app with Docker Compose
 REM Usage: deploy.bat [version]
 
 REM Set default version if not provided
@@ -11,7 +11,7 @@ REM Set default GITHUB_OWNER if not provided
 if "%GITHUB_OWNER%"=="" set GITHUB_OWNER=chdbc-samples
 
 REM Set default APP_NAME if not provided
-if "%APP_NAME%"=="" set APP_NAME=college-schedule-app
+if "%APP_NAME%"=="" set APP_NAME=car-app
 
 echo Deploying %APP_NAME% version: %VERSION%
 

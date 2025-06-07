@@ -25,7 +25,7 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_DB: college_db_test
+          POSTGRES_DB: car_db_test
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
         ports:

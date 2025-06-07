@@ -5,7 +5,7 @@ metadata:
   labels:
     app: postgres
 data:
-  POSTGRES_DB: college-db
+  POSTGRES_DB: car-db
   POSTGRES_USER: postgres
 ---
 apiVersion: v1
@@ -101,7 +101,7 @@ spec:
             - -U
             - postgres
             - -d
-            - college-db
+            - car-db
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -113,7 +113,7 @@ spec:
             - -U
             - postgres
             - -d
-            - college-db
+            - car-db
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
@@ -154,7 +154,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: college-schedule-app  # Дозволити доступ тільки від застосунку
+          app: car-app  # Дозволити доступ тільки від застосунку
     ports:
     - protocol: TCP
       port: 5432
