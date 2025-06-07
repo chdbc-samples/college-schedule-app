@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: library-schedule-app
+  name: library-app
   labels:
-    app: library-schedule-app
+    app: library-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: library-schedule-app
+      app: library-app
   template:
     metadata:
       labels:
-        app: library-schedule-app
+        app: library-app
     spec:
       imagePullSecrets:
       - name: ghcr-secret
       containers:
       - name: app
-        image: ghcr.io/{{GITHUB_OWNER}}/library-schedule-app:{{IMAGE_TAG}}
+        image: ghcr.io/{{GITHUB_OWNER}}/library-app:{{IMAGE_TAG}}
         imagePullPolicy: Always  # Завжди завантажувати образ
         ports:
         - containerPort: 8080
@@ -82,12 +82,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: library-schedule-app
+  name: library-app
   labels:
-    app: library-schedule-app
+    app: library-app
 spec:
   selector:
-    app: library-schedule-app
+    app: library-app
   ports:
   - port: 80
     targetPort: 8080

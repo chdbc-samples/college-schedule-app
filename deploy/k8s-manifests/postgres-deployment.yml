@@ -154,7 +154,7 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          app: library-schedule-app  # Дозволити доступ тільки від застосунку
+          app: library-app  # Дозволити доступ тільки від застосунку
     ports:
     - protocol: TCP
       port: 5432

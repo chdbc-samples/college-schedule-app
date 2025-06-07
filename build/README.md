@@ -41,13 +41,13 @@ build-docker-image.bat 0.3.0-SNAPSHOT
 
 2. **Зберіть образ**:
    ```cmd
-   docker build -t ghcr.io/chdbc-samples/library-schedule-app:VERSION .
+   docker build -t ghcr.io/chdbc-samples/library-app:VERSION .
    ```
    Замініть `VERSION` на потрібний тег версії (наприклад, `0.3.0-SNAPSHOT`).
 
 3. **Відправте образ** (необов'язково, якщо хочете опублікувати):
    ```cmd
-   docker push ghcr.io/chdbc-samples/library-schedule-app:VERSION
+   docker push ghcr.io/chdbc-samples/library-app:VERSION
    ```
 
 ## Огляд Dockerfile
@@ -97,7 +97,7 @@ build-docker-image.bat 0.3.0-SNAPSHOT
 Після збірки перевірте образ:
 
 ```cmd
-docker images | findstr library-schedule-app
+docker images | findstr library-app
 ```
 
 Перевірте запуск контейнера:

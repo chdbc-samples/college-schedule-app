@@ -10,10 +10,10 @@ on:
         type: string
 
 env:
-  AZURE_RESOURCE_GROUP: library-schedule-rg
-  AKS_CLUSTER_NAME: library-schedule-aks
+  AZURE_RESOURCE_GROUP: library-rg
+  AKS_CLUSTER_NAME: library-aks
   CONTAINER_REGISTRY: ghcr.io
-  IMAGE_NAME: library-schedule-app
+  IMAGE_NAME: library-app
 
 jobs:
   deploy:
@@ -82,17 +82,17 @@ jobs:
           echo "Deploying application..."
           
           # Видаляємо старе розгортання
-          kubectl delete deployment library-schedule-app --ignore-not-found=true
+          kubectl delete deployment library-app --ignore-not-found=true
           
           # Чекаємо поки поди зникнуть
-          kubectl wait --for=delete pod -l app=library-schedule-app --timeout=120s || true
+          kubectl wait --for=delete pod -l app=library-app --timeout=120s || true
           
           # Застосовуємо нове розгортання
           kubectl apply -f deploy/k8s-manifests/app-deployment.yml
 
           # Чекаємо, поки програма буде готова
           echo "Waiting for application to be ready..."
-          kubectl wait --for=condition=ready pod -l app=library-schedule-app --timeout=600s
+          kubectl wait --for=condition=ready pod -l app=library-app --timeout=600s
           
           echo "✅ Application is ready"
 
@@ -110,7 +110,7 @@ jobs:
           kubectl get deployments
           
           # Отримуємо зовнішній IP
-          EXTERNAL_IP=$(kubectl get service library-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          EXTERNAL_IP=$(kubectl get service library-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
           if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
             echo ""
             echo "🌐 URL програми: http://$EXTERNAL_IP"
@@ -125,7 +125,7 @@ jobs:
           
           # Чекаємо, поки з'явиться зовнішній IP
           for i in {1..30}; do
-            EXTERNAL_IP=$(kubectl get service library-schedule-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            EXTERNAL_IP=$(kubectl get service library-app --output jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
             if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
               echo "✅ Зовнішній IP знайдено: $EXTERNAL_IP"
               echo "🌐 URL програми: http://$EXTERNAL_IP"
@@ -145,7 +145,7 @@ jobs:
           
           if [ -z "$EXTERNAL_IP" ] || [ "$EXTERNAL_IP" == "null" ]; then
             echo "⚠️  Зовнішній IP не призначено після 5 хвилин"
-            echo "Можна перевірити пізніше командою: kubectl get service library-schedule-app"
+            echo "Можна перевірити пізніше командою: kubectl get service library-app"
           fi
 
       - name: Відображення статусу розгортання
@@ -157,20 +157,20 @@ jobs:
           echo "Образ: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}"
           echo ""
           echo "=== Статус подів ==="
-          kubectl get pods -l app=library-schedule-app -o wide
+          kubectl get pods -l app=library-app -o wide
           echo ""
           echo "=== Логи подів (останні 10 рядків) ==="
-          kubectl logs -l app=library-schedule-app --tail=10 || echo "Логи ще недоступні"
+          kubectl logs -l app=library-app --tail=10 || echo "Логи ще недоступні"
           echo ""
           echo "=== Статус сервісу ==="
-          kubectl get service library-schedule-app
+          kubectl get service library-app
           echo ""
           echo "=== Статус розгортання ==="
-          kubectl get deployment library-schedule-app
+          kubectl get deployment library-app
           echo ""
           
           # Показуємо події якщо є проблеми
-          if ! kubectl get pods -l app=library-schedule-app --no-headers | grep -q "Running"; then
+          if ! kubectl get pods -l app=library-app --no-headers | grep -q "Running"; then
             echo "=== Останні події ==="
             kubectl get events --sort-by=.metadata.creationTimestamp --field-selector involvedObject.kind=Pod | tail -10
           fi
@@ -182,10 +182,10 @@ jobs:
           echo "=== Інформація для усунення неполадок ==="
           echo ""
           echo "=== Деталі подів ==="
-          kubectl describe pods -l app=library-schedule-app
+          kubectl describe pods -l app=library-app
           echo ""
           echo "=== Останні події ==="
           kubectl get events --sort-by=.metadata.creationTimestamp | tail -20
           echo ""
           echo "=== Статус розгортання ==="
-          kubectl describe deployment library-schedule-app
+          kubectl describe deployment library-app

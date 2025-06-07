@@ -12,10 +12,10 @@
   
   <!-- Інформація про проект -->
   <groupId>com.library</groupId>
-  <artifactId>library-schedule</artifactId>
+  <artifactId>library</artifactId>
   <packaging>jar</packaging>
   <version>0.4.0-SNAPSHOT</version>
-  <name>library-schedule-app</name>
+  <name>library-app</name>
   
   <!-- Властивості проекту -->
   <properties>
@@ -25,9 +25,9 @@
 
   <!-- SCM Information -->
   <scm>
-    <connection>scm:git:https://github.com/chdbc-samples/library-schedule-app.git</connection>
-    <developerConnection>scm:git:https://github.com/chdbc-samples/library-schedule-app.git</developerConnection>
-    <url>https://github.com/chdbc-samples/library-schedule-app</url>
+    <connection>scm:git:https://github.com/chdbc-samples/library-app.git</connection>
+    <developerConnection>scm:git:https://github.com/chdbc-samples/library-app.git</developerConnection>
+    <url>https://github.com/chdbc-samples/library-app</url>
     <tag>HEAD</tag>
   </scm>
 
@@ -83,7 +83,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/chdbc-samples/library-schedule-app</url>
+      <url>https://maven.pkg.github.com/chdbc-samples/library-app</url>
     </repository>
   </distributionManagement>
 

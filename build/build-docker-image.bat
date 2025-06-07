@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Script to build the Docker image for library-schedule-app
+REM Script to build the Docker image for library-app
 REM Usage: build-docker-image.bat [version] [repository]
 
 REM Set default values if not provided
@@ -25,25 +25,25 @@ if "%GITHUB_REPOSITORY%"=="" (
     )
 )
 
-echo Building Docker image for library-schedule-app version: %VERSION%
+echo Building Docker image for library-app version: %VERSION%
 echo Repository: %GITHUB_REPOSITORY%
 
 REM Copy JAR file from target directory
-echo Copying JAR file from ..\target\library-schedule-%VERSION%.jar
-copy ..\target\library-schedule-%VERSION%.jar app.jar
+echo Copying JAR file from ..\target\library-%VERSION%.jar
+copy ..\target\library-%VERSION%.jar app.jar
 
 REM Check if app.jar exists and was copied successfully
 if not exist app.jar (
-    echo Error: Failed to copy JAR file from ..\target\library-schedule-%VERSION%.jar
+    echo Error: Failed to copy JAR file from ..\target\library-%VERSION%.jar
     echo Please make sure to build the project first using 'mvn package'
     exit /b 1
 )
 
 REM Build the Docker image
-docker build -t ghcr.io/%GITHUB_REPOSITORY%/library-schedule-app:%VERSION% .
+docker build -t ghcr.io/%GITHUB_REPOSITORY%/library-app:%VERSION% .
 
 REM Optional: Tag as latest as well
-docker tag ghcr.io/%GITHUB_REPOSITORY%/library-schedule-app:%VERSION% ghcr.io/%GITHUB_REPOSITORY%/library-schedule-app:latest
+docker tag ghcr.io/%GITHUB_REPOSITORY%/library-app:%VERSION% ghcr.io/%GITHUB_REPOSITORY%/library-app:latest
 
 echo Docker image built successfully.
 echo.
@@ -52,8 +52,8 @@ echo 1. Make sure you are logged in to GitHub Container Registry:
 echo    docker login ghcr.io -u YOUR_GITHUB_USERNAME -p YOUR_GITHUB_PAT
 echo.
 echo 2. Then run these commands:
-echo    docker push ghcr.io/%GITHUB_REPOSITORY%/library-schedule-app:%VERSION%
-echo    docker push ghcr.io/%GITHUB_REPOSITORY%/library-schedule-app:latest
+echo    docker push ghcr.io/%GITHUB_REPOSITORY%/library-app:%VERSION%
+echo    docker push ghcr.io/%GITHUB_REPOSITORY%/library-app:latest
 echo.
 echo Note: You need a GitHub Personal Access Token with 'write:packages' permission.
 echo Create one at: https://github.com/settings/tokens

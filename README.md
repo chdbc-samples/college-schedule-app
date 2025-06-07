@@ -29,7 +29,7 @@
 <dependencies>
     <dependency>
         <groupId>com.library</groupId>
-        <artifactId>library-schedule</artifactId>
+        <artifactId>library</artifactId>
         <version>0.2.0-SNAPSHOT</version>
     </dependency>
 </dependencies>
@@ -37,7 +37,7 @@
 <repositories>
     <repository>
         <id>github</id>
-        <url>https://maven.pkg.github.com/OWNER/library-schedule-app</url>
+        <url>https://maven.pkg.github.com/OWNER/library-app</url>
     </repository>
 </repositories>
 ```
