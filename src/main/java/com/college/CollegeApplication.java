@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.nio.charset.StandardCharsets;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -77,7 +78,8 @@ public class CollegeApplication implements CommandLineRunner {
     }
 
     private void addScheduleFromCsv() {
-        try (CSVReader reader = new CSVReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("schedule.csv")))) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("schedule.csv"),
+        StandardCharsets.UTF_8))) {
             List<String[]> records = reader.readAll();
             
             records.remove(0); // Видалити перший рядок з назвами стовпців
